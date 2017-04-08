@@ -16,7 +16,9 @@ Description: This package provides functions to emulate molecular quantitative
     replace real data when these cannot be shared for diverse privacy reasons).
     The data generation schemes are based on generally accepted principles of
     population genetics (Hardy--Weinberg equilibrium, linkage-disequilibrium,
-    natural selection, pleiotropic control, sparsity assumptions).
+    natural selection, pleiotropic control, sparsity assumptions). Details in
+    H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient inference for
+    genetic association studies with multiple outcomes, *Biostatistics*, 2017.
 Depends:
     R (>= 3.2.0)
 License: GPL (>= 2) | file LICENSE

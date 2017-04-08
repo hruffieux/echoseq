@@ -14,7 +14,7 @@ pleiotropic control, sparsity assumptions).
 
 Details in H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient 
 inference for genetic association studies with multiple outcomes, *Biostatistics*, 
-2017). 
+2017. 
 
 ## Installation
 
