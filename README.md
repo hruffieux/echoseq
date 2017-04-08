@@ -1,4 +1,4 @@
-# mimeo - Faithful simulation and replication of genetic variants, molecular expression levels and other phenotypic data
+# mimeo - Faithful simulations and replications of molecular and clinical data
  
 ## Overview
 
@@ -8,7 +8,7 @@ user-specified association patterns. The data can be the result of pure
 simulation or can replicate real datasets supplied by the user (which may
 replace real data when these cannot be shared for diverse privacy reasons). The 
 data generation schemes are based on generally accepted principles of population 
-genetics (Hardy--Weinberg equilibrium, linkage-disequilibrium, natural selection,
+genetics (Hardy–Weinberg equilibrium, linkage-disequilibrium, natural selection,
 pleiotropic control, sparsity assumptions).
 
 Details in H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient 
