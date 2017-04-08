@@ -1,4 +1,6 @@
-# mimeo - Faithful simulations and replications of molecular and clinical data
+## mimeo - Faithful simulations and replications of molecular and clinical data
+
+[![Travis-CI Build Status](https://travis-ci.org/hruffieux/mimeo.svg?branch=master)](https://travis-ci.org/hruffieux/mimeo)
  
 ## Overview
 
