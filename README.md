@@ -1,5 +1,4 @@
-# mimeo - Faithful simulation and replication of genetic variants, molecular 
-    expression levels and other phenotypic data
+# mimeo - Faithful simulation and replication of genetic variants, molecular expression levels and other phenotypic data
  
 ## Overview
 
