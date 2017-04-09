@@ -133,20 +133,42 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 
   beta <- matrix(0.0, nrow = p, ncol = d)
 
+  # The proportion of phenotypic variance explained per SNP for phenotype k is
+  # computed using the assumption of independent SNPs for simplicity (such an
+  # assumption is commonly made for such computation). In this case we have, for
+  # SNP X_j (assuming that the true effects \beta_{jk} are known):
+  #
+  # pve_j = var(X_j \beta_{jk} | \beta_{jk}) / (tot_var_expl_k + var_err_k),
+  #
+  # where tot_var_expl_k is the total variance explained by the SNPs for
+  # phenotype k.
+  #
+  # We estimate the numerator using
+  # var_hat(X_j \beta_{jk} | \beta_{jk}) = \beta_{jk}^2 * var_hat(X_j) =
+  #                                        \beta_{jk}^2 * 2 * m_hat_j * (1 - m_hat_j),
+  # where m_hat_j is the empricial minor allele frequency of X_j.
+  #
+  # We therefore set the regression effects as
+  #
+  # \beta_{jk} <- sqrt{ pve_j * (tot_var_expl_k + var_err_k) / [ 2 * m_hat_j * (1 - m_hat_j) ] }
+  #
+  # Natural selection: the relationship between \beta_{jk} and m_hat_j is
+  # roughly inverse (for m_hat_j between 0 and 0.5).
+
   beta[, ind_d0] <- sapply(ind_d0, function(k) {
 
     p0_k <- sum(pat[,k])
     vec_pve_per_snp <- rbeta(p0_k, shape1 = 2, shape2 = 5) # positively skewed Beta distribution,
-    # to give more weight to smaller effect sizes
+                                                           # to give more weight to smaller effect sizes
     vec_pve_per_snp <- vec_pve_per_snp / sum(vec_pve_per_snp) * pve_per_snp * p0_k
 
-    tot_var_expl <- pve_per_snp * p0_k * var_err[k] / (1 - pve_per_snp * p0_k)
+    tot_var_expl_k <- pve_per_snp * p0_k * var_err[k] / (1 - pve_per_snp * p0_k)
 
     vec_maf_act <- vec_maf[pat[,k]]
     vec_var_act <- 2 * vec_maf_act * (1 - vec_maf_act)
 
     beta_k <- rep(0.0, p)
-    beta_k[pat[,k]] <- sqrt((tot_var_expl + var_err[k]) * vec_pve_per_snp / vec_var_act)
+    beta_k[pat[,k]] <- sqrt((tot_var_expl_k + var_err[k]) * vec_pve_per_snp / vec_var_act)
 
     # switches signs with probabilty 0.5
     beta_k[pat[,k]] <- sample(c(1, -1), p0_k, replace = TRUE) * beta_k[pat[,k]]
