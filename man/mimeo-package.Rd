@@ -3,8 +3,8 @@
 \docType{package}
 \name{mimeo-package}
 \alias{mimeo-package}
-\title{mimeo: a package for faithful simulation and replication of genetic variants,
-molecular expression levels and other phenotypic data}
+\title{mimeo: a package for faithful replications and simulations of genetic 
+variants, molecular expression levels and other phenotypic data}
 \description{
 The mimeo package provides functions to emulate molecular quantitative trait
 locus data and clinical data associated with genetic variants under

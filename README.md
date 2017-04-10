@@ -1,4 +1,4 @@
-## mimeo - Faithful simulations and replications of molecular and clinical data
+## mimeo - Faithful replications and simulations of molecular and clinical data
 
 [![Travis-CI Build Status](https://travis-ci.org/hruffieux/mimeo.svg?branch=master)](https://travis-ci.org/hruffieux/mimeo)
  
@@ -6,12 +6,13 @@
 
 **mimeo** is an R package providing functions to emulate molecular quantitative
 trait locus data, and clinical data associated with genetic variants under
-user-specified association patterns. The data can be the result of pure 
-simulation or can replicate real datasets supplied by the user. The data 
-simulated using **mimeo** may replace real data when these cannot be shared for 
-diverse privacy reasons. The data generation schemes are based on generally 
-accepted principles of population genetics (Hardy–Weinberg equilibrium, 
-linkage-disequilibrium, natural selection, pleiotropic control, sparsity assumptions).
+user-specified association patterns. The data can be obtained by pure simulation 
+or can replicate real datasets supplied by the user. Datasets simulated using 
+**mimeo** may replace real datasets when these cannot be shared for diverse 
+privacy reasons. The data generation schemes are based on generally accepted 
+principles of population genetics (Hardy–Weinberg equilibrium, 
+linkage-disequilibrium, natural selection, pleiotropic control, sparsity 
+assumptions, etc).
 
 Details in H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient inference 
 for genetic association studies with multiple outcomes, *Biostatistics*, 2017. 
@@ -21,7 +22,7 @@ for genetic association studies with multiple outcomes, *Biostatistics*, 2017.
 To install, run the following commands in R:
 
 ``` r
-install.packages("devtools")
+# install.packages("devtools")
 devtools::install_github("hruffieux/mimeo")
 ```
 

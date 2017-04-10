@@ -1,9 +1,9 @@
 Package: mimeo
 Type: Package
-Title: Simulation and replication of genetic variants, molecular expression
+Title: Replications and simulations of genetic variants, molecular expression
     levels and other phenotypic data
-Version: 0.0.1
-Date: 2017-04-08
+Version: 0.1.0
+Date: 2017-04-10
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
             role = c("aut", "cre")),
