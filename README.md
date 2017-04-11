@@ -1,5 +1,7 @@
-## echoseq - Faithful replications and simulations of molecular and clinical data
- 
+## echoseq: Faithful replications and simulations of molecular and clinical data
+
+[![Travis-CI Build Status](https://travis-ci.org/hruffieux/echoseq.svg?branch=master)](https://travis-ci.org/hruffieux/echoseq)
+
 ## Overview
 
 **echoseq** is an R package providing functions to emulate molecular quantitative
