@@ -1,14 +1,12 @@
-## mimeo - Faithful replications and simulations of molecular and clinical data
-
-[![Travis-CI Build Status](https://travis-ci.org/hruffieux/mimeo.svg?branch=master)](https://travis-ci.org/hruffieux/mimeo)
+## echoseq - Faithful replications and simulations of molecular and clinical data
  
 ## Overview
 
-**mimeo** is an R package providing functions to emulate molecular quantitative
+**echoseq** is an R package providing functions to emulate molecular quantitative
 trait locus data, and clinical data associated with genetic variants under
 user-specified association patterns. The data can be obtained by pure simulation 
 or can replicate real datasets supplied by the user. Datasets simulated using 
-**mimeo** may replace real datasets when these cannot be shared for diverse 
+**echoseq** may replace real datasets when these cannot be shared for diverse 
 privacy reasons. The data generation schemes are based on generally accepted 
 principles of population genetics (Hardy–Weinberg equilibrium, 
 linkage-disequilibrium, natural selection, pleiotropic control, sparsity 
@@ -23,7 +21,7 @@ To install, run the following commands in R:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("hruffieux/mimeo")
+devtools::install_github("hruffieux/echoseq")
 ```
 
 ## License and authors
@@ -33,4 +31,4 @@ Authors and copyright are provided in [DESCRIPTION](DESCRIPTION).
 
 ## Issues
 
-To report an issue, please use the [mimeo issue tracker](https://github.com/hruffieux/mimeo/issues) at github.com.
+To report an issue, please use the [echoseq issue tracker](https://github.com/hruffieux/echoseq/issues) at github.com.

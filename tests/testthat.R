@@ -1,4 +1,4 @@
 library(testthat)
-library(mimeo)
+library(echoseq)
 
-test_check("mimeo")
+test_check("echoseq")

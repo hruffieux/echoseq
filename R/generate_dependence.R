@@ -1,5 +1,5 @@
-# This file is part of the `mimeo` R package:
-#     https://github.com/hruffieux/mimeo
+# This file is part of the `echoseq` R package:
+#     https://github.com/hruffieux/echoseq
 #
 
 # Internal function setting the pattern of associations used by the

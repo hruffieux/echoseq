@@ -1,4 +1,4 @@
-Package: mimeo
+Package: echoseq
 Type: Package
 Title: Replications and simulations of genetic variants, molecular expression
     levels and other phenotypic data
