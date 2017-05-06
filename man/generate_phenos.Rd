@@ -4,7 +4,7 @@
 \alias{generate_phenos}
 \title{Generate phenotypic data with prespecified block-wise correlation structure.}
 \usage{
-generate_phenos(n, d, var_err, cor_type = NULL, vec_rho = NULL,
+generate_phenos(n, d, var_err = 1, cor_type = NULL, vec_rho = NULL,
   n_cpus = 1, user_seed = NULL)
 }
 \arguments{
@@ -52,11 +52,9 @@ with SNPs from a probit model.
 user_seed <- 123; set.seed(user_seed)
 n <- 500; d <- 10000
 cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
-var_err <- runif(d, min = 0.1, max = 0.4)
 
-list_phenos <- generate_phenos(n, d, var_err, cor_type = cor_type,
-                               vec_rho = vec_rho, n_cpus = 2,
-                               user_seed = user_seed)
+list_phenos <- generate_phenos(n, d, cor_type = cor_type, vec_rho = vec_rho,
+                               n_cpus = 2, user_seed = user_seed)
 
 }
 \seealso{

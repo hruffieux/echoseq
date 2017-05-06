@@ -265,8 +265,8 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #'
 #' cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
 #'
-#' list_phenos <- generate_phenos(n, d, var_err = 1, cor_type = cor_type,
-#'                                vec_rho = vec_rho, n_cpus = 2)
+#' list_phenos <- generate_phenos(n, d, cor_type = cor_type, vec_rho = vec_rho,
+#'                                n_cpus = 2)
 #'
 #' # Gaussian phenotypes
 #' dat_g <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
