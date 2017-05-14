@@ -2,8 +2,8 @@ Package: echoseq
 Type: Package
 Title: Replications and simulations of genetic variants, molecular expression
     levels and other phenotypic data
-Version: 0.1.0
-Date: 2017-04-10
+Version: 0.1.1
+Date: 2017-05-14
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
             role = c("aut", "cre")),
@@ -25,6 +25,7 @@ License: GPL (>= 2) | file LICENSE
 LazyData: TRUE
 Imports:
     Matrix (>= 1.2-2),
-    parallel
+    parallel,
+    plyr (>= 1.8.4)
 RoxygenNote: 6.0.1
 Suggests: testthat

@@ -103,3 +103,11 @@ create_named_list_ <- function(...) {
 
 
 make_chunks_ <- function(x, n_g) split(x, factor(sort(rank(x) %% n_g)))
+
+
+
+cbind_fill_matrix <- function(...) {
+  tr <- lapply(..., as.matrix)
+  tr <- lapply(..., t)
+  t(as.matrix(plyr::rbind.fill.matrix(tr)))
+}

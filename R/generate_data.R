@@ -130,7 +130,7 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
       snps
     }, mc.cores = n_cpus)
 
-    snps <- do.call(cbind, snps)
+    snps <- cbind_fill_matrix(snps)
   }
 
   snps <- as.matrix(snps)
@@ -277,7 +277,7 @@ generate_phenos <- function(n, d, var_err = 1, cor_type = NULL, vec_rho = NULL,
 
     }, mc.cores = n_cpus)
 
-    phenos <- do.call(cbind, phenos)
+    phenos <- cbind_fill_matrix(phenos)
   }
 
   phenos <- as.matrix(phenos)

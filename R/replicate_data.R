@@ -121,7 +121,8 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
     snps
   }, mc.cores = n_cpus)
 
-  snps <- do.call(cbind, snps)
+  snps <- cbind_fill_matrix(snps)
+
   rownames(snps) <- paste("ind_", 1:n, sep = "")
   colnames(snps) <- paste("snp_", 1:p, sep = "")
 
@@ -272,7 +273,7 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
 
   }, mc.cores = n_cpus)
 
-  phenos <- do.call(cbind, phenos)
+  phenos <- cbind_fill_matrix(phenos)
 
   rownames(phenos) <- paste("ind_", 1:n, sep = "")
   colnames(phenos) <- paste("pheno_", 1:d, sep = "")
