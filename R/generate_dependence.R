@@ -5,37 +5,61 @@
 # Internal function setting the pattern of associations used by the
 # `generate_dependence` function.
 #
-set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
+set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, block_phenos, chunks_ph) {
 
-  if (is.null(chunks_ph)) { # no imposed correlation block structure (either indep
-    # or correlation from real phenotypes). creates artificial chunks.
-    n_chunks_ph <- length(vec_prob_sh)
-    chunks_ph <- make_chunks_(1:d, n_chunks_ph)
-  } else {
-    n_chunks_ph <- length(chunks_ph)
-  }
 
-  check_structure_(vec_prob_sh, "vector", "numeric")
-  check_zero_one_(vec_prob_sh)
+  if (block_phenos) {
 
-  pat <- matrix(FALSE, nrow = p, ncol = d)
-
-  for(ind_j in ind_p0) {
-
-    # random permutation, so that two different SNPs can be associated with a given
-    # block with different probabilities
-    vec_prob_sh_perm <- sample(vec_prob_sh, n_chunks_ph, replace = TRUE)
-
-    for(ch in 1:n_chunks_ph) {
-      ind_ch_d0 <- intersect(ind_d0, chunks_ph[[ch]])
-      pat[ind_j, ind_ch_d0] <- sample(c(TRUE, FALSE),
-                                      length(ind_ch_d0), replace = TRUE,
-                                      prob=c(vec_prob_sh_perm[ch], 1 - vec_prob_sh_perm[ch]))
+    if (is.null(chunks_ph)) { # no imposed correlation block structure (either indep
+      # or correlation from real phenotypes). creates artificial chunks.
+      n_chunks_ph <- length(vec_prob_sh)
+      chunks_ph <- make_chunks_(1:d, n_chunks_ph)
+    } else {
+      n_chunks_ph <- length(chunks_ph)
     }
 
-    if (all(!pat[ind_j, ind_d0]))
-      pat[ind_j, ind_d0][sample(1:length(ind_d0), 1)] <- TRUE # each active covariate must be
-    # associated with at least one response
+    pat <- matrix(FALSE, nrow = p, ncol = d)
+
+    for(ind_j in ind_p0) {
+
+      # random permutation, so that two different SNPs can be associated with a given
+      # block with different probabilities
+      vec_prob_sh_perm <- sample(vec_prob_sh, n_chunks_ph, replace = TRUE)
+
+      for(ch in 1:n_chunks_ph) {
+        ind_ch_d0 <- intersect(ind_d0, chunks_ph[[ch]])
+        pat[ind_j, ind_ch_d0] <- sample(c(TRUE, FALSE),
+                                        length(ind_ch_d0), replace = TRUE,
+                                        prob=c(vec_prob_sh_perm[ch], 1 - vec_prob_sh_perm[ch]))
+      }
+
+      if (all(!pat[ind_j, ind_d0]))
+        pat[ind_j, ind_d0][sample(1:length(ind_d0), 1)] <- TRUE # each active covariate must be
+      # associated with at least one response
+    }
+
+  } else {
+
+    d0 <- length(ind_d0)
+    p0 <- length(ind_p0)
+
+    if (length(vec_prob_sh) == 1)
+      vec_prob_sh <- rep(vec_prob_sh, p0)
+
+    pat <- matrix(FALSE, nrow = p, ncol = d)
+
+    for(j in 1:p0) {
+
+      ind_j <- ind_p0[j]
+
+      pat[ind_j, ind_d0] <- sample(c(TRUE, FALSE), d0, replace = TRUE,
+                                      prob=c(vec_prob_sh[j], 1 - vec_prob_sh[j]))
+
+      if (all(!pat[ind_j, ind_d0]))
+        pat[ind_j, ind_d0][sample(1:length(ind_d0), 1)] <- TRUE # each active covariate must be
+                                                                # associated with at least one response
+    }
+
   }
 
   for(ind_k in ind_d0) {
@@ -52,7 +76,7 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
 #
 generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
                                 vec_prob_sh, vec_maf, pve_per_snp, max_tot_pve,
-                                var_err, chunks_ph) {
+                                var_err, block_phenos, chunks_ph) {
 
   # pve_per_snp average variance explained per snp
   p <- length(vec_maf)
@@ -105,7 +129,7 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
     ind_d0 <- ind_d0[!bool_cst]
   }
 
-  pat <- set_pattern_(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph)
+  pat <- set_pattern_(d, p, ind_d0, ind_p0, vec_prob_sh, block_phenos, chunks_ph)
 
   check_structure_(vec_maf, "vector", "numeric", p)
   check_zero_one_(vec_maf)
@@ -191,13 +215,19 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #' The user can provide using the argument \code{vec_prob_sh} a selection of
 #' probabilities describing the propensity with which a given active SNP (i.e.,
 #' associated with at least one phenotype) will be associated with active
-#' phenotypes (i.e., associated with at least one SNP) of given phenotypic
-#' blocks. More precisely, for each active SNP and each phenotypic block, a
-#' value from this vector is selected uniformly at random; for instance a large
-#' probability implies that the SNPs is highly likely to be associated with
-#' each active phenotype in the block. If a single value is provided, all active
-#' SNPs will have the same probability to be associated with active phenotypes
-#' of all blocks.
+#' phenotypes (i.e., associated with at least one SNP). If \code{block_phenos}
+#' is \code{FALSE} (default), the association pattern is created independently
+#' of any structure in the phenotype matrix. If \code{block_phenos} is
+#' \code{TRUE}, then if the phenotypes have been generated with some block
+#' correlation structure, this block structure will be used to specify the
+#' correlation pattern, else, if the phenotypes were generated independently one
+#' from another, blocks are defined articially and the number of blocks
+#' corresponds to the length of the vector \code{vec_prob_sh}). More precisely,
+#' for each active SNP and each phenotypic block, a value from this vector is
+#' selected uniformly at random; for instance a large probability implies that
+#' the SNPs is highly likely to be associated with each active phenotype in the
+#' block. If a single value is provided, all active SNPs will have the same
+#' probability to be associated with active phenotypes of all blocks.
 #'
 #' The user can provide either argument \code{pve_per_snp}, specifying the
 #' average proportion of phenotypic variance explained per active SNP for a
@@ -228,9 +258,13 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #' @param ind_p0 A vector of indices specifying the position of the "active"
 #'   SNPs (i.e., which will be associated with at least one phenotype). Must
 #'   range between 1 and \code{ncol(list_snps$snps)}.
-#' @param vec_prob_sh Vector providing a set of probabilities with which an
-#'   active SNP is associated with an additional active phenotype in a given
-#'   phenotypic block. See Details section.
+#' @param vec_prob_sh If \code{block_phenos} is \code{FALSE} (default), vector
+#'   of length 1 or \code{length(ind_p0)} providing the probabilities with which
+#'   each active SNP will be associated with an additional active phenotype. If
+#'   \code{block_phenos} is \code{TRUE}, the vector must have size between 1 and
+#'   \code{ncol(list_phenos$phenos)} and gives the set of probabilities with
+#'   which an active SNP is associated with an additional active phenotype is
+#'   specific to each phenotypic block.
 #' @param family Distribution used to generate the phenotypes. Must be either
 #' "\code{gaussian}" or "\code{binomial}" for binary phenotypes.
 #' @param pve_per_snp Average proportion of phenotypic variance explained by
@@ -239,6 +273,13 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #' @param max_tot_pve Maximum proportion of phenotypic variance explained by the
 #'   active SNPs across all phenotypes. Must be \code{NULL} if
 #'   \code{pve_per_snp} is provided. See Details section.
+#' @param block_phenos Boolean for deciding whether the values in
+#'   \code{vec_prob_sh} should be randomly selected and assigned differently to
+#'   each block of phenotypes (if the phenotypes have no block-correlation
+#'   structure, blocks are defined articially and the number of blocks
+#'   corresponds to the length of the vector \code{vec_prob_sh}). Default is
+#'   \code{FALSE}, no phenotypic block structure is used to create the
+#'   association pattern.
 #' @param user_seed Seed set for reproducibility. Default is \code{NULL}, no
 #'   seed set.
 #'
@@ -282,8 +323,8 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #'
 generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
                                 vec_prob_sh, family = "gaussian",
-                                pve_per_snp = NULL, max_tot_pve = NULL,
-                                user_seed = NULL) {
+                                pve_per_snp = NULL, max_tot_pve = 0.5,
+                                block_phenos = FALSE, user_seed = NULL) {
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(user_seed)){
@@ -320,15 +361,25 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
   if (!is.null(pve_per_snp) & !is.null(max_tot_pve))
     stop("Either pve_per_snp or max_tot_pve must be NULL.")
 
+  check_structure_(ind_d0, "vector", "numeric")
+  check_structure_(ind_p0, "vector", "numeric")
+
+  check_structure_(block_phenos, "vector", "logical", 1)
+
+  if (block_phenos) {
+    check_structure_(vec_prob_sh, "vector", "numeric")
+    stopifnot(length(vec_prob_sh) >= 1 & length(vec_prob_sh) <= ncol(list_phenos$phenos))
+  } else {
+    check_structure_(vec_prob_sh, "vector", "numeric", c(1, length(ind_p0)))
+  }
+  check_zero_one_(vec_prob_sh)
+
 
   with(c(list_snps, list_phenos), {
 
     d <- ncol(phenos)
     n <- nrow(snps)
     p <- ncol(snps)
-
-    check_structure_(ind_d0, "vector", "numeric")
-    check_structure_(ind_p0, "vector", "numeric")
 
     ind_d0 <- sort(unique(ind_d0))
     if (!all(ind_d0 %in% 1:d))
@@ -348,7 +399,8 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
     snps_act <- snps[, ind_p0, drop = FALSE]
     list_eff <- generate_eff_sizes_(d, phenos_act, snps_act, ind_d0, ind_p0,
                                     vec_prob_sh, vec_maf, pve_per_snp,
-                                    max_tot_pve, var_err, chunks_ph = ind_bl)
+                                    max_tot_pve, var_err, block_phenos,
+                                    chunks_ph = ind_bl)
     with(list_eff, {
       phenos <- phenos + snps %*% beta
 

@@ -1,9 +1,9 @@
 Package: echoseq
 Type: Package
-Title: Replications and simulations of genetic variants, molecular expression
+Title: Replication and simulation of genetic variants, molecular expression
     levels and other phenotypic data
-Version: 0.1.1
-Date: 2017-05-14
+Version: 0.2.0
+Date: 2018-01-13
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
             role = c("aut", "cre")),

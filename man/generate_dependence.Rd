@@ -5,8 +5,8 @@
 \title{Generate pleiotropic associations between SNPs and phenotypes.}
 \usage{
 generate_dependence(list_snps, list_phenos, ind_d0, ind_p0, vec_prob_sh,
-  family = "gaussian", pve_per_snp = NULL, max_tot_pve = NULL,
-  user_seed = NULL)
+  family = "gaussian", pve_per_snp = NULL, max_tot_pve = 0.5,
+  block_phenos = FALSE, user_seed = NULL)
 }
 \arguments{
 \item{list_snps}{An object of class "sim_snps" containing simulated SNP data
@@ -27,9 +27,13 @@ range between 1 and \code{ncol(list_phenos$phenos)}.}
 SNPs (i.e., which will be associated with at least one phenotype). Must
 range between 1 and \code{ncol(list_snps$snps)}.}
 
-\item{vec_prob_sh}{Vector providing a set of probabilities with which an
-active SNP is associated with an additional active phenotype in a given
-phenotypic block. See Details section.}
+\item{vec_prob_sh}{If \code{block_phenos} is \code{FALSE} (default), vector
+of length 1 or \code{length(ind_p0)} providing the probabilities with which
+each active SNP will be associated with an additional active phenotype. If
+\code{block_phenos} is \code{TRUE}, the vector must have size between 1 and
+\code{ncol(list_phenos$phenos)} and gives the set of probabilities with
+which an active SNP is associated with an additional active phenotype is
+specific to each phenotypic block.}
 
 \item{family}{Distribution used to generate the phenotypes. Must be either
 "\code{gaussian}" or "\code{binomial}" for binary phenotypes.}
@@ -41,6 +45,14 @@ each active SNP (for an active phenotype). Must be \code{NULL} if
 \item{max_tot_pve}{Maximum proportion of phenotypic variance explained by the
 active SNPs across all phenotypes. Must be \code{NULL} if
 \code{pve_per_snp} is provided. See Details section.}
+
+\item{block_phenos}{Boolean for deciding whether the values in
+\code{vec_prob_sh} should be randomly selected and assigned differently to
+each block of phenotypes (if the phenotypes have no block-correlation
+structure, blocks are defined articially and the number of blocks
+corresponds to the length of the vector \code{vec_prob_sh}). Default is
+\code{FALSE}, no phenotypic block structure is used to create the
+association pattern.}
 
 \item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
 seed set.}
@@ -68,13 +80,19 @@ therefore adds a genetic contribution to the phenotypic data.
 The user can provide using the argument \code{vec_prob_sh} a selection of
 probabilities describing the propensity with which a given active SNP (i.e.,
 associated with at least one phenotype) will be associated with active
-phenotypes (i.e., associated with at least one SNP) of given phenotypic
-blocks. More precisely, for each active SNP and each phenotypic block, a
-value from this vector is selected uniformly at random; for instance a large
-probability implies that the SNPs is highly likely to be associated with
-each active phenotype in the block. If a single value is provided, all active
-SNPs will have the same probability to be associated with active phenotypes
-of all blocks.
+phenotypes (i.e., associated with at least one SNP). If \code{block_phenos}
+is \code{FALSE} (default), the association pattern is created independently
+of any structure in the phenotype matrix. If \code{block_phenos} is
+\code{TRUE}, then if the phenotypes have been generated with some block
+correlation structure, this block structure will be used to specify the
+correlation pattern, else, if the phenotypes were generated independently one
+from another, blocks are defined articially and the number of blocks
+corresponds to the length of the vector \code{vec_prob_sh}). More precisely,
+for each active SNP and each phenotypic block, a value from this vector is
+selected uniformly at random; for instance a large probability implies that
+the SNPs is highly likely to be associated with each active phenotype in the
+block. If a single value is provided, all active SNPs will have the same
+probability to be associated with active phenotypes of all blocks.
 
 The user can provide either argument \code{pve_per_snp}, specifying the
 average proportion of phenotypic variance explained per active SNP for a
