@@ -74,7 +74,7 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, block_phenos, chunks
 # Internal function setting the effect sizes used by the `generate_dependence`
 # function.
 #
-generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
+generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0, pat,
                                 vec_prob_sh, vec_maf, pve_per_snp, max_tot_pve,
                                 var_err, block_phenos, chunks_ph) {
 
@@ -102,7 +102,8 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 
     warning(message)
 
-    ind_p0 <- ind_p0[!bool_cst]
+    if (is.null(pat))
+      ind_p0 <- ind_p0[!bool_cst]
   }
 
   var_phenos_act <- apply(phenos_act, 2, var)
@@ -126,10 +127,13 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
     }
 
     warning(message)
-    ind_d0 <- ind_d0[!bool_cst]
+
+    if (is.null(pat))
+      ind_d0 <- ind_d0[!bool_cst]
   }
 
-  pat <- set_pattern_(d, p, ind_d0, ind_p0, vec_prob_sh, block_phenos, chunks_ph)
+  if (is.null(pat))
+    pat <- set_pattern_(d, p, ind_d0, ind_p0, vec_prob_sh, block_phenos, chunks_ph)
 
   check_structure_(vec_maf, "vector", "numeric", p)
   check_zero_one_(vec_maf)
@@ -254,17 +258,24 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #'   \code{\link{replicate_real_phenos}}.
 #' @param ind_d0 A vector of indices specifying the position of the "active"
 #'   phenotypes (i.e., which will be associated with at least one SNP). Must
-#'   range between 1 and \code{ncol(list_phenos$phenos)}.
+#'   range between 1 and \code{ncol(list_phenos$phenos)}. Must be \code{NULL} if
+#'   \code{pat} is supplied.
 #' @param ind_p0 A vector of indices specifying the position of the "active"
 #'   SNPs (i.e., which will be associated with at least one phenotype). Must
-#'   range between 1 and \code{ncol(list_snps$snps)}.
+#'   range between 1 and \code{ncol(list_snps$snps)}. Must be \code{NULL} if
+#'   \code{pat} is supplied.
 #' @param vec_prob_sh If \code{block_phenos} is \code{FALSE} (default), vector
 #'   of length 1 or \code{length(ind_p0)} providing the probabilities with which
 #'   each active SNP will be associated with an additional active phenotype. If
 #'   \code{block_phenos} is \code{TRUE}, the vector must have size between 1 and
 #'   \code{ncol(list_phenos$phenos)} and gives the set of probabilities with
 #'   which an active SNP is associated with an additional active phenotype is
-#'   specific to each phenotypic block.
+#'   specific to each phenotypic block. Must be \code{NULL} if \code{pat} is
+#'   supplied.
+#' @param pat Boolean matrix of size \code{ncol(list_snps$snps)} x
+#' \code{ncol(list_phenos$phenos)} which can be supplied to set the association
+#'   pattern, instead of providing \code{ind_d0} and \code{ind_p0}. Must be
+#'   \code{NULL} if \code{ind_d0} and \code{ind_p0} are provided.
 #' @param family Distribution used to generate the phenotypes. Must be either
 #' "\code{gaussian}" or "\code{binomial}" for binary phenotypes.
 #' @param pve_per_snp Average proportion of phenotypic variance explained by
@@ -279,7 +290,7 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #'   structure, blocks are defined articially and the number of blocks
 #'   corresponds to the length of the vector \code{vec_prob_sh}). Default is
 #'   \code{FALSE}, no phenotypic block structure is used to create the
-#'   association pattern.
+#'   association pattern. Not used if \code{pat} is supplied.
 #' @param user_seed Seed set for reproducibility. Default is \code{NULL}, no
 #'   seed set.
 #'
@@ -322,7 +333,7 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #' @export
 #'
 generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
-                                vec_prob_sh, family = "gaussian",
+                                vec_prob_sh, pat = NULL, family = "gaussian",
                                 pve_per_snp = NULL, max_tot_pve = 0.5,
                                 block_phenos = FALSE, user_seed = NULL) {
 
@@ -361,25 +372,42 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
   if (!is.null(pve_per_snp) & !is.null(max_tot_pve))
     stop("Either pve_per_snp or max_tot_pve must be NULL.")
 
-  check_structure_(ind_d0, "vector", "numeric")
-  check_structure_(ind_p0, "vector", "numeric")
-
-  check_structure_(block_phenos, "vector", "logical", 1)
-
-  if (block_phenos) {
-    check_structure_(vec_prob_sh, "vector", "numeric")
-    stopifnot(length(vec_prob_sh) >= 1 & length(vec_prob_sh) <= ncol(list_phenos$phenos))
-  } else {
-    check_structure_(vec_prob_sh, "vector", "numeric", c(1, length(ind_p0)))
-  }
-  check_zero_one_(vec_prob_sh)
-
 
   with(c(list_snps, list_phenos), {
 
     d <- ncol(phenos)
     n <- nrow(snps)
     p <- ncol(snps)
+
+
+    check_structure_(pat, "matrix", "logical", c(p, d), null_ok = TRUE)
+
+    if (is.null(pat)) {
+
+      check_structure_(ind_d0, "vector", "numeric")
+      check_structure_(ind_p0, "vector", "numeric")
+
+      check_structure_(block_phenos, "vector", "logical", 1)
+
+      if (block_phenos) {
+        check_structure_(vec_prob_sh, "vector", "numeric")
+        stopifnot(length(vec_prob_sh) >= 1 & length(vec_prob_sh) <= ncol(list_phenos$phenos))
+      } else {
+        check_structure_(vec_prob_sh, "vector", "numeric", c(1, length(ind_p0)))
+      }
+      check_zero_one_(vec_prob_sh)
+
+    } else {
+
+      stopifnot(is.null(ind_d0) & is.null(ind_p0) & is.null(vec_prob_sh))
+
+      ind_p0 <- which(rowSums(pat)>0)
+      ind_d0 <- which(colSums(pat)>0)
+
+      if (length(ind_p0) == 0 | length(ind_d0) == 0) {
+        stop("The pattern supplied must involve at least one active SNP/phenotype.")
+      }
+    }
 
     ind_d0 <- sort(unique(ind_d0))
     if (!all(ind_d0 %in% 1:d))
@@ -397,7 +425,7 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
 
     phenos_act <- phenos[, ind_d0, drop = FALSE]
     snps_act <- snps[, ind_p0, drop = FALSE]
-    list_eff <- generate_eff_sizes_(d, phenos_act, snps_act, ind_d0, ind_p0,
+    list_eff <- generate_eff_sizes_(d, phenos_act, snps_act, ind_d0, ind_p0, pat,
                                     vec_prob_sh, vec_maf, pve_per_snp,
                                     max_tot_pve, var_err, block_phenos,
                                     chunks_ph = ind_bl)

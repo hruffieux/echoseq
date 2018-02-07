@@ -5,8 +5,8 @@
 \title{Generate pleiotropic associations between SNPs and phenotypes.}
 \usage{
 generate_dependence(list_snps, list_phenos, ind_d0, ind_p0, vec_prob_sh,
-  family = "gaussian", pve_per_snp = NULL, max_tot_pve = 0.5,
-  block_phenos = FALSE, user_seed = NULL)
+  pat = NULL, family = "gaussian", pve_per_snp = NULL,
+  max_tot_pve = 0.5, block_phenos = FALSE, user_seed = NULL)
 }
 \arguments{
 \item{list_snps}{An object of class "sim_snps" containing simulated SNP data
@@ -21,11 +21,13 @@ It must be obtained from the function \code{\link{generate_phenos}} or
 
 \item{ind_d0}{A vector of indices specifying the position of the "active"
 phenotypes (i.e., which will be associated with at least one SNP). Must
-range between 1 and \code{ncol(list_phenos$phenos)}.}
+range between 1 and \code{ncol(list_phenos$phenos)}. Must be \code{NULL} if
+\code{pat} is supplied.}
 
 \item{ind_p0}{A vector of indices specifying the position of the "active"
 SNPs (i.e., which will be associated with at least one phenotype). Must
-range between 1 and \code{ncol(list_snps$snps)}.}
+range between 1 and \code{ncol(list_snps$snps)}. Must be \code{NULL} if
+\code{pat} is supplied.}
 
 \item{vec_prob_sh}{If \code{block_phenos} is \code{FALSE} (default), vector
 of length 1 or \code{length(ind_p0)} providing the probabilities with which
@@ -33,7 +35,13 @@ each active SNP will be associated with an additional active phenotype. If
 \code{block_phenos} is \code{TRUE}, the vector must have size between 1 and
 \code{ncol(list_phenos$phenos)} and gives the set of probabilities with
 which an active SNP is associated with an additional active phenotype is
-specific to each phenotypic block.}
+specific to each phenotypic block. Must be \code{NULL} if \code{pat} is
+supplied.}
+
+\item{pat}{Boolean matrix of size \code{ncol(list_snps$snps)} x
+\code{ncol(list_phenos$phenos)} which can be supplied to set the association
+  pattern, instead of providing \code{ind_d0} and \code{ind_p0}. Must be
+  \code{NULL} if \code{ind_d0} and \code{ind_p0} are provided.}
 
 \item{family}{Distribution used to generate the phenotypes. Must be either
 "\code{gaussian}" or "\code{binomial}" for binary phenotypes.}
@@ -52,7 +60,7 @@ each block of phenotypes (if the phenotypes have no block-correlation
 structure, blocks are defined articially and the number of blocks
 corresponds to the length of the vector \code{vec_prob_sh}). Default is
 \code{FALSE}, no phenotypic block structure is used to create the
-association pattern.}
+association pattern. Not used if \code{pat} is supplied.}
 
 \item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
 seed set.}
