@@ -105,7 +105,7 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
     p_bl <- length(ind_bl[[bl]])
 
     # we add some noise to avoid undefined correlation in case of constant phenotypes.
-    R <- cor(real_snps[, ind_bl[[bl]]] + matrix(rnorm(n_real*p_bl), nrow = n_real))
+    R <- cor(real_snps[, ind_bl[[bl]]] + matrix(rnorm(n_real*p_bl, sd = 1e-2), nrow = n_real))
     R <- Matrix::nearPD(R, corr = TRUE, do2eigen = TRUE)$mat
 
     L <- t(chol(R))
