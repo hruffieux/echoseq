@@ -3,7 +3,7 @@
 \docType{package}
 \name{echoseq-package}
 \alias{echoseq-package}
-\title{echoseq: a package for faithful replications and simulations of genetic 
+\title{echoseq: a package for faithful replications and simulations of genetic
 variants, molecular expression levels and other phenotypic data}
 \description{
 The echoseq package provides functions to emulate molecular quantitative trait

@@ -263,8 +263,9 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
   phenos <- parallel::mclapply(1:n_bl, function(bl) {
     d_bl <- length(ind_bl[[bl]])
 
+    eps <- .Machine$double.eps
     # we add some noise to avoid undefined correlation in case of constant phenotypes.
-    R <- cor(real_phenos[, ind_bl[[bl]]] + matrix(rnorm(n_real*d_bl), nrow = n_real))
+    R <- cor(real_phenos[, ind_bl[[bl]]] + matrix(rnorm(n_real*d_bl, sd = 1e-2), nrow = n_real))
     R <- Matrix::nearPD(R, corr = TRUE, do2eigen = TRUE)$mat
     L <- t(chol(R))
     tZ <- matrix(sapply(var_err[ind_bl[[bl]]], function(ve) rnorm(n, 0, sqrt(ve))),
@@ -274,6 +275,8 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
   }, mc.cores = n_cpus)
 
   phenos <- cbind_fill_matrix(phenos)
+
+  phenos <- sweep(sweep(scale(phenos), 2, apply(real_phenos, 2, sd), `*`), 2, apply(real_phenos, 2, mean), `+`)
 
   rownames(phenos) <- paste("ind_", 1:n, sep = "")
   colnames(phenos) <- paste("pheno_", 1:d, sep = "")

@@ -1,4 +1,4 @@
-#' echoseq: a package for faithful replications and simulations of genetic 
+#' echoseq: a package for faithful replications and simulations of genetic
 #' variants, molecular expression levels and other phenotypic data
 #'
 #' The echoseq package provides functions to emulate molecular quantitative trait
@@ -15,5 +15,5 @@
 #'
 #' @docType package
 #' @name echoseq-package
-#' @importFrom stats cor qnorm rbeta rbinom rnorm runif setNames var
+#' @importFrom stats cor qnorm rbeta rbinom rnorm runif sd setNames var
 NULL
