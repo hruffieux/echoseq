@@ -17,19 +17,13 @@ assumptions, etc).
 Details in H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient inference 
 for genetic association studies with multiple outcomes, *Biostatistics*, 2017. 
 
-## Warning
-
-**This is a development branch**, it is not guaranteed to be stable at any given
-time and features are subject to change. Please use the [stable version](https://github.com/hruffieux/echoseq), unless you want to test and
-report issues.
-
 ## Installation
 
 To install, run the following commands in R:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("hruffieux/echoseq", ref = "devel")
+devtools::install_github("hruffieux/echoseq")
 ```
 
 ## License and authors
