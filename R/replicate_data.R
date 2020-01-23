@@ -268,8 +268,7 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
     R <- cor(real_phenos[, ind_bl[[bl]]] + matrix(rnorm(n_real*d_bl, sd = 1e-2), nrow = n_real))
     R <- Matrix::nearPD(R, corr = TRUE, do2eigen = TRUE)$mat
     L <- t(chol(R))
-    tZ <- matrix(sapply(var_err[ind_bl[[bl]]], function(ve) rnorm(n, 0, sqrt(ve))),
-                 ncol = n, byrow = TRUE)
+    tZ <- matrix(rnorm(n_real*d_bl), ncol = n)
     as.matrix(t(L %*% tZ))
 
   }, mc.cores = n_cpus)
