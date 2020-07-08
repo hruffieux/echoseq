@@ -4,9 +4,19 @@
 \alias{generate_dependence}
 \title{Generate pleiotropic associations between SNPs and phenotypes.}
 \usage{
-generate_dependence(list_snps, list_phenos, ind_d0, ind_p0, vec_prob_sh,
-  pat = NULL, family = "gaussian", pve_per_snp = NULL,
-  max_tot_pve = 0.5, block_phenos = FALSE, user_seed = NULL)
+generate_dependence(
+  list_snps,
+  list_phenos,
+  ind_d0,
+  ind_p0,
+  vec_prob_sh,
+  pat = NULL,
+  family = "gaussian",
+  pve_per_snp = NULL,
+  max_tot_pve = 0.5,
+  block_phenos = FALSE,
+  user_seed = NULL
+)
 }
 \arguments{
 \item{list_snps}{An object of class "sim_snps" containing simulated SNP data

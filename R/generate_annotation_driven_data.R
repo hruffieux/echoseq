@@ -1,0 +1,1272 @@
+set_locus_and_module_pattern_from_annots <- function(n, # sample size
+
+                                                     # MARKS
+                                                     #
+                                                     real_mark_mat,          # if NULL, binary annots simulated
+                                                     q_pres_mark_loci,       # if !is.null(real_mark_mat), quantile for selecting annots which concern most loci (i.e., at least one SNP in each locus) - should be large so enough candidate active SNPs are available when annots_vs_indep is large
+                                                     r,                      # total number of annots, can be NULL if !is.null(real_mark_mat) in which case all annots are used
+                                                     r0,                     # total number of candidate active annots (if NULL, all r annots; if small, the same annots will tend to be active for several modules); if 1, mostly 1-2 active annots in each module, 5, mean number of annots approx 5
+                                                     tb_act_annots,           # table mapping the modules with their corresponding active annots. Must be obtained using the set_act_annots function. tpois_lam_act_annots_mm must be NULL as unused. tb_act_annots must be NULL if !is.null(real_mark_mat), and r0 and tb_act_annots cannots both be non-NULL.
+                                                     tpois_lam_act_annots_mm, # zero-truncated Poisson parameter for drawing the number of active annots per module
+
+
+                                                     # PREDICTORS (SNPS)
+                                                     #
+                                                     real_snp_mat,              # if NULL, SNPs simulated under the Hardy-Weinberg assumption
+                                                     rho_min_x,                 # if is.null(real_snp_mat), minimum correlation for blocks of simulated autocorrelated SNPs
+                                                     rho_max_x,                 # if is.null(real_snp_mat), minimum correlation for blocks of simulated autocorrelated SNPs
+                                                     n_loci,                    # number of loci
+                                                     mean_locus_size,           # mean locus size (drawn from a Poisson distribution)
+                                                     min_dist,                  # minimum number of SNPs separating each pair of loci
+                                                     p0,                        # minimum number of active SNPs (the actual number will also depend on the prop_act argument of the generate_phenos_from_annots function)
+                                                     max_nb_act_snps_per_locus, # maximum number of active SNPs allowed per locus (typically 4-5?)
+                                                     maf_thres,                 # minor allele frequency threshold (applied for both real and simulated SNPs)
+
+                                                     # (SIMULATED) RESPONSES
+                                                     #
+                                                     n_modules,               # number of modules
+                                                     mean_module_size,        # mean module size (drawn from a Poisson distribution)
+                                                     vec_q,                   # exact module sizes provided. Either mean_module_size or vec_q must be NULL.
+                                                     candidate_modules_annots, # the subset of module ids where all associations are triggered by annots.
+                                                     # the complement, setdiff(1:n_modules, candidate_modules_annots) are the modules where associations are independent of annots
+                                                     # if NULL, all n_modules will be considered for both mark-triggered and independent associations
+                                                     # ASSOCIATIONS
+                                                     #
+                                                     annots_vs_indep, # proportion of hotspots driven/triggered by the annots
+                                                     rbeta_sh1_rr,   # Beta distribution shape2 parameter for the proportion of responses associated with an active SNP (in a given module)
+                                                     # rbeta_sh2_rr = 1, so right skewed if rbeta_sh1_rr > 1
+
+                                                     # OTHER SETTINGS
+                                                     #
+                                                     n_cpus = 1, # number of CPUs to be used for the VBEM algorithm (if n_modules > 1)
+                                                     maxit = 1e4 # maximum number of iterations for the repeat loops
+) {  #
+
+
+  # SOME SANITY CHECKS
+  #
+  #
+  check_natural_(n)
+  check_natural_(n_loci)
+  check_natural_(p0)
+  check_natural_(max_nb_act_snps_per_locus)
+  check_natural_(n_modules)
+
+  check_structure_(real_mark_mat, "matrix", "numeric", null_ok = TRUE, na_ok = TRUE)
+  check_structure_(real_snp_mat, "matrix", "numeric", null_ok = TRUE)
+
+  if (is.null(r)) {
+    stopifnot(!is.null(real_mark_mat))
+    r <- ncol(real_mark_mat)
+  } else {
+    check_natural_(r)
+  }
+
+  check_positive_(mean_locus_size)
+
+  stopifnot(xor(mean_module_size, vec_q))
+
+  if (!is.null(mean_module_size)) {
+    check_positive_(mean_module_size)
+  }
+  if (!is.null(vec_q)) {
+    check_natural_(vec_q)
+    stopifnot(all.equal(length(vec_q), n_modules))
+  }
+
+  check_positive_(rbeta_sh1_rr)
+
+  check_zero_one_(annots_vs_indep)
+  check_zero_one_(maf_thres)
+
+
+  if (!is.null(r0)) {
+
+    stopifnot(r0 %in% 1:r) # (necessary but not sufficient, as some non-binary annots may be dropped)
+    stopifnot(is.null(tb_act_annots))
+
+  }
+
+  if (!is.null(tb_act_annots)) {
+
+    stopifnot(names(tb_act_annots) == c("module", "act_mark"))
+    stopifnot(tb_act_annots$module %in% 1:n_modules)
+    stopifnot(tb_act_annots$act_mark %in% 1:r) # (necessary but not sufficient, as some non-binary annots may be dropped)
+    stopifnot(is.null(real_mark_mat)) # the chosen annots will depend on their locus coverage
+    stopifnot(is.null(r0))
+    stopifnot(is.null(tpois_lam_act_annots_mm)) # not used
+
+  } else {
+
+    check_positive_(tpois_lam_act_annots_mm)
+
+  }
+
+  if (!is.null(candidate_modules_annots)) {
+
+    stopifnot(candidate_modules_annots %in% 1:n_modules)
+    candidate_modules_annots <- sort(unique(candidate_modules_annots))
+    stopifnot(length(candidate_modules_annots) < n_modules) # if FALSE, all modules are considered for mark-triggered associations, which is equivalent to is.null(candidate_modules_annots) and annots_vs_indep = 1
+    stopifnot(annots_vs_indep > 0)
+
+    if (!is.null(tb_act_annots)) {
+
+      stopifnot(all.equal(sort(unique(tb_act_annots$module)), candidate_modules_annots))
+
+    }
+
+    candidate_modules_indep <- setdiff(1:n_modules, candidate_modules_annots)
+
+  } else { # all the modules are considered for both mark-triggered and independent associations
+
+    candidate_modules_annots <- candidate_modules_indep <- 1:n_modules
+
+  }
+
+  check_natural_(maxit)
+  check_natural_(n_cpus)
+  stopifnot(n_cpus <= parallel::detectCores())
+
+
+
+  # BUILD LOCI PATTERN
+  #
+  #
+  # Poisson distribution with user-specified mean locus size,
+  # but making sure that the minimum size generated is larger than the
+  # user-specified maximum number of active SNPs per locus
+  # (usually verified if the mean locus size is reasonably large and the maximum
+  # number of active SNPs per locus reasonably small).
+  #
+  it <- 1
+
+  repeat {
+
+    vec_p <- rpois(n_loci, lambda = mean_locus_size) # E(X) = lambda
+
+    it <- it + 1
+
+    if (min(vec_p) >= max_nb_act_snps_per_locus | it > maxit) {
+      break
+    }
+
+  }
+
+  # Stop if condition still not verified after maxit iterations
+  #
+  stopifnot(min(vec_p) >= max_nb_act_snps_per_locus)
+
+  p <- sum(vec_p)
+  n_loci <- length(vec_p)
+
+  pos_loci <- c(1, cumsum(vec_p[-n_loci]) + 1)
+
+
+  # List of loci, positions etc
+  #
+  list_loci <- set_blocks_(p, pos_loci, n_cpus = 1)
+
+
+  # SOME FURTHER SANITY CHECKS
+  #
+  stopifnot(list_loci$n_var_blocks == p)
+  stopifnot(list_loci$n_bl== n_loci)
+
+  if (is.null(real_mark_mat)) {
+
+    stopifnot(is.null(q_pres_mark_loci))
+
+  } else if (is.null(real_snp_mat)){
+
+    stop("If real annots supplied, the corresponding real SNP data must be supplied as well.")
+
+  } else { # both real_mark_mat and real_snp_mat non-NULL
+
+    stopifnot(ncol(real_mark_mat) >= r) # (necessary but not sufficient, as some non-binary annots may be dropped)
+    check_zero_one_(q_pres_mark_loci)
+
+    stopifnot(r*(1-q_pres_mark_loci) > 1) # at least one candidate mark to draw from (necessary but not sufficient)
+
+    snps_with_annots <- intersect(colnames(real_snp_mat), rownames(real_mark_mat))
+
+    stopifnot(length(snps_with_annots) >= p) # necessary condition for drawing X and V (not sufficient)
+
+  }
+
+  if (is.null(real_snp_mat)) {
+
+    check_zero_one_(rho_min_x)
+    check_zero_one_(rho_max_x)
+
+  } else {
+
+    stopifnot(is.null(rho_min_x) & is.null(rho_max_x))
+
+    stopifnot(real_snp_mat %in% 0:2)
+
+  }
+
+
+  # BUILD MODULE PATTERN
+  #
+  #
+  # Poisson distribution with user-specified mean module size,
+  # but making sure that the minimum size generated is larger than 10, so there
+  # is enough information to estimate the module-specific hotspot propensity
+  # variance (usually verified if the mean module size is reasonably large, e.g.,
+  # mean_module_size = 40)
+  #
+  it <- 1
+
+  if (is.null(vec_q)) { # exact module sizes not provided, only mean module size
+    repeat {
+
+      vec_q <- rpois(n_modules, lambda = mean_module_size)
+
+      it <- it + 1
+
+      if (min(vec_q) >= 10 | it > maxit) {
+        break
+      }
+
+    }
+  }
+
+  # stop if condition still not verified after maxit iterations
+  #
+  stopifnot(min(vec_q) >= 10)
+
+  q <- sum(vec_q)
+  n_modules <- length(vec_q)
+
+  pos_modules <- c(1, cumsum(vec_q[-n_modules]) + 1)
+
+
+  # list to be given to the epispot function. Partition into modules. No partition of the SNPs.
+  #
+  list_partition <- set_blocks_(c(p, q), list(1, pos_modules), n_cpus = n_cpus) # n_cpus used for the VBEM algo
+
+  if (n_modules > 1) {
+    stopifnot(list_partition$bl_y$n_var_blocks == q)
+    stopifnot(list_partition$bl_y$n_bl == n_modules)
+  }
+
+  if (!is.null(real_mark_mat)) {
+
+    # BUILD SNP MATRIX AND CORRESPONDING MARK MATRIX IF BOTH FROM REAL DATA
+    #
+    #
+    # Exclude non-binary annots (such as the minimum distance to TSS) if present
+    # (binary mark assumption needed below when creating the active SNP pattern).
+    #
+    bool_bin <- apply(real_mark_mat, 2, function(mark) all(mark[!is.na(mark)] %in% 0:1))
+    real_mark_mat <- real_mark_mat[, bool_bin, drop = FALSE]
+
+    it <- 1
+
+    repeat {
+
+      # build matrix of SNPs
+      #
+      X <- generate_snps_from_loci(n,
+                                   list_loci,
+                                   real_snp_mat = real_snp_mat,
+                                   maf_thres = maf_thres,
+                                   min_dist = min_dist) # 150 SNPs corresponds to a median distance of approx 1Mb for chr1 of our monocyte data (see save_chr_1_unstim.R)
+
+
+      # build matrix of annots
+      #
+      V <- real_mark_mat[match(colnames(X), rownames(real_mark_mat)), , drop = FALSE] # if a SNP is absent from in real_mark_mat, NA row produced
+
+      # remove annots whose frequency is too low to be informative (nrow(V) * min_freq = 5)
+      #
+      V <- V[, colSums(V) >= 5, drop = FALSE] # remove annots that concern too few SNPs
+      V <- V[, colSums(V) <= 2*nrow(V)/3, drop = FALSE] # remove annots that concern too many SNPs. For simulations more than nrow(V)-10 as we simulate positive effects only (lognormal)
+
+      if (r < ncol(V)) {
+        V <- V[, sort(sample(1:ncol(V), size = r)), drop = FALSE]
+      }
+
+      it <- it + 1
+
+      if (sum(is.na(V)) == 0 | it > maxit) { # make sure that all SNPs have all annots available
+        break
+      }
+    }
+
+    if (sum(is.na(V))>0) {
+      stop("No complete mark matrix for the selected loci.")
+    }
+
+    stopifnot(all.equal(rownames(V), colnames(X)))
+
+    if (r > ncol(V)) {
+
+      print(ncol(V))
+      r <- ncol(V)
+
+      stopifnot(r*(1-q_pres_mark_loci) > 1) # at least one candidate mark to draw from
+
+      if (!is.null(r0)) {
+        stopifnot(r0 %in% 1:r)
+      }
+
+      if (!is.null(tb_act_annots)) {
+        stopifnot(tb_act_annots$act_mark %in% 1:r)
+      }
+
+    }
+  }
+
+  if (annots_vs_indep > 0) { # at least one active SNP will be triggered by the annots
+
+    # SELECT ACTIVE MARKS
+    #
+    if (!is.null(real_mark_mat)) {
+
+      # for each mark, proportion of loci in which it concerns at least one SNP
+      #
+      prop_V_in_loci <- colMeans(apply(V, 2, function(vv) {
+
+        sapply(levels(list_loci$vec_fac_bl), function(ll) sum(vv[list_loci$vec_fac_bl == ll])>0)
+
+      }))
+
+      # threshold on the proportion of loci with at least one SNP concerned by the mark under consideration
+      # (needs to be high enough so that an active mark can concern sufficiently many SNPs - and hence one has sufficient info to estimate its effect)
+      #
+      thres_pr_locus_has_a_snp_in_a_mark <- quantile(prop_V_in_loci, probs = q_pres_mark_loci)
+
+      # the candidate annots are those which have, in each locus,
+      # a probability > thres_pr_locus_has_a_snp_in_a_mark to concern at least one SNP
+      #
+      candidate_act_annots <- which(prop_V_in_loci > thres_pr_locus_has_a_snp_in_a_mark)
+
+    } else {
+
+      if (is.null(tb_act_annots)) {
+        candidate_act_annots <- 1:r # simulated mark matrix --> all annots can be taken as candidate as V will be generated accordingly late
+      }
+
+      V <- NULL # V to be simulated later, based on the mark/snp association pattern
+
+    }
+
+    if (is.null(tb_act_annots)) {
+
+      if (!is.null(r0) && r0 < length(candidate_act_annots)) { # choose among a restricted subset of r0 annots
+
+        candidate_act_annots <- sort(sample(candidate_act_annots, r0))
+
+      }
+
+      tb_act_annots <- set_act_annots(candidate_modules_annots,
+                                     candidate_act_annots,
+                                     tpois_lam_act_annots_mm)
+
+    }
+
+    # START BY CHOOSING SNPS WHOSE ACTIVITY IS DRIVEN BY THE MARKS (only if annots_vs_indep > 0)
+    #
+    p0_annots <- ceiling(p0 * annots_vs_indep) # number of active SNPs driven by the annots
+
+    list_map_annots <- choose_act_snps_("annots",
+                                        q, # needed for the case n_modules = 1, and cannots be retrieved from list_partition
+                                        p0_annots,
+                                        list_loci,
+                                        list_partition,
+                                        max_nb_act_snps_per_locus,
+                                        rbeta_sh1_rr,
+                                        candidate_modules = candidate_modules_annots,
+                                        excluded_act_snps = NULL,
+                                        tb_act_annots = tb_act_annots,
+                                        user_locus_ids = NULL,
+                                        V = V,
+                                        maxit = maxit)
+
+    list_map_annots$tb_act_annots <- tb_act_annots
+
+    # THEN CHOOSE SNPS WHOSE ACTIVITY IS NOT DRIVEN BY THE MARKS
+    #
+    locus_ids_annots <- sort_loci_by_number_of_act_snps_(list_map_annots$tb_act_snps, list_loci$n_bl)
+
+    p0_indep <- p0 - p0_annots
+    excluded_act_snps <- list_map_annots$tb_act_snps$act_snp
+    user_locus_ids <- locus_ids_annots
+
+  } else {
+
+    p0_indep <- p0
+    excluded_act_snps <- NULL
+    user_locus_ids <- NULL
+
+    list_map_annots <- NULL
+
+  }
+
+  if (annots_vs_indep < 1) {
+
+    list_map_indep <- choose_act_snps_("indep",
+                                       q,
+                                       p0_indep,
+                                       list_loci,
+                                       list_partition,
+                                       max_nb_act_snps_per_locus,
+                                       rbeta_sh1_rr,
+                                       candidate_modules = candidate_modules_indep,
+                                       excluded_act_snps = excluded_act_snps,
+                                       tb_act_annots = list_map_annots$tb_act_annots,
+                                       user_locus_ids = user_locus_ids,
+                                       V = NULL,
+                                       maxit = maxit)
+
+  } else {
+
+    list_map_indep <- NULL
+
+  }
+
+  if (is.null(real_mark_mat)) {
+
+    V <- generate_binary_annots(p, r, list_map_annots)
+
+    X <- generate_snps_from_loci(n,
+                                 list_loci,
+                                 real_snp_mat = real_snp_mat,
+                                 rho_min = rho_min_x,
+                                 rho_max = rho_max_x,
+                                 maf_thres = maf_thres,
+                                 min_dist = min_dist) # minimal distance between each locus (in # of SNPs)
+
+  }
+
+
+  create_named_list_(X, V, q,
+                    pos_loci,
+                    pos_modules,
+                    list_partition,
+                    list_loci,
+                    list_map_annots,
+                    list_map_indep)
+
+}
+
+
+set_act_annots_module_specific <- function(r, r0, n_modules) {
+
+  stopifnot(!is.null(r))
+
+  stopifnot(r >= r0)
+
+  # module-specific annots # we force the modules to be concerned by different annots
+  #
+  stopifnot(r0 >= n_modules)
+
+  ind_r0 <- sort(sample(1:r, r0)) # Indices of active annots. Must be null if real_annots_mat non-NULL, and must be NULL if r0 non-NULL and vice-versa.
+
+  # Assign a different mark to each module
+  #
+  tb_act_annots <- as.data.frame(cbind(1:n_modules, sample(ind_r0, size = n_modules)))
+
+  # Assign the remaining active annots
+  #
+  if (r0 > n_modules) {
+    tb_act_annots <- rbind(tb_act_annots,
+                           cbind(sample(1:n_modules, r0 - n_modules, replace = TRUE),
+                                 setdiff(ind_r0, tb_act_annots[,2])))
+  }
+
+  tb_act_annots <- as.data.frame(tb_act_annots)
+  names(tb_act_annots) <- c("module", "act_mark")
+
+  tb_act_annots <- tb_act_annots[order(tb_act_annots$act_mark),]
+  tb_act_annots <- tb_act_annots[order(tb_act_annots$module),]
+
+  tb_act_annots
+
+}
+
+set_act_annots <- function(candidate_modules,
+                           candidate_ind,      # these mark ids COULD be assigned as active mark
+                           tpois_lam_act_annots_mm,
+                           force_ind = NULL) { # these mark ids WILL be assigned to at least one module (we make sure that they are)
+
+
+  if (!is.null(force_ind)) {
+
+    place_all_force_ind <- sample(candidate_modules, size = length(force_ind), replace = TRUE)
+
+  }
+
+  tb_act_annots <- lapply(candidate_modules, function(mm) {
+
+    if (length(candidate_ind) > 1) {
+
+      if (!is.null(force_ind) && any(place_all_force_ind %in% mm)) {
+
+        act_annots_mm <- force_ind[place_all_force_ind %in% mm]
+
+      } else {
+
+        act_annots_mm <- NULL
+
+      }
+
+      # Zero-truncated Poisson distribution
+      #
+      act_annots_mm <- sort(unique(c(act_annots_mm, sort(sample(candidate_ind,
+                                                                size = min(
+                                                                  rtpois(1, lambda = tpois_lam_act_annots_mm, a = 0),
+                                                                  length(candidate_ind)
+                                                                )
+      )
+      ))))
+
+    } else { # single candidate mark
+
+      act_annots_mm <- candidate_ind
+
+    }
+
+    cbind(rep(mm, length(act_annots_mm)), act_annots_mm)
+
+  })
+
+  tb_act_annots <- as.data.frame(do.call(rbind, tb_act_annots))
+  names(tb_act_annots) <- c("module", "act_mark")
+
+  tb_act_annots <- tb_act_annots[order(tb_act_annots$act_mark),]
+  tb_act_annots <- tb_act_annots[order(tb_act_annots$module),]
+
+  tb_act_annots
+
+}
+
+
+
+# Sort the loci based on the number of already assigned active SNPs in these loci:
+# start with the loci with few active SNPs and finish with those with many active SNPs
+#
+sort_loci_by_number_of_act_snps_ <- function(tb_act_snps, n_loci) {
+
+  # the "sample()" is to shuffle the loci within groups of loci having a given number of active SNPs
+  #
+  tb_act_snps <- as.data.frame(tb_act_snps)
+  names(tb_act_snps) <- c("locus", "act_snp")
+
+  nb_act_snps_per_locus <- tb_act_snps[sample(1:nrow(tb_act_snps)), ] %>% group_by(.data$locus) %>% mutate(nb_act_snps = length(.data$act_snp))
+  nb_act_snps_per_locus <- unique(subset(nb_act_snps_per_locus, select = - .data$act_snp))
+  nb_act_snps_per_locus <- nb_act_snps_per_locus[order(nb_act_snps_per_locus$nb_act_snps), ]
+
+  # the "sample()" is to shuffle the loci within groups of loci having no active SNP
+  #
+  c(setdiff(sample(1:n_loci), nb_act_snps_per_locus$locus), # first the loci which do not have any active SNP yet
+    nb_act_snps_per_locus$locus) # then the loci with only 1 active SNPs, then those with 2, up to max_nb_act_snps_per_locus
+
+}
+
+
+
+
+choose_act_snps_ <- function(type,                     # flag "annots" or "indep" depending on whether the chosen active SNPs are driven by the annots or not
+                             q,                         # total number of responses
+                             p0_sub,                    # number of active SNPs to choose
+                             list_loci,                 # locus partition
+                             list_partition,            # module partition
+                             max_nb_act_snps_per_locus, # maximum number of active SNPs per locus allowed
+                             rbeta_sh1_rr,              # Beta distribution shape2 parameter for the proportion of responses associated with an active SNP (in a given module), rbeta_sh1_rr = 1, so left skewed
+                             candidate_modules,         # modules to be considered. Must match the modules in tb_act_annots if type == "annots"
+                             excluded_act_snps = NULL,  # SNP ids excluded from the candidate active SNPs
+                             tb_act_annots = NULL,       # dataframe of active annots for each module
+                             user_locus_ids = NULL,     # locus ids from which to select the active SNPs (by order of appearance)
+                             V = NULL,                  # matrix of annots
+                             maxit = 1e4                # maximum number of iterations to be used in the repeat loops
+) {
+
+
+  stopifnot(type %in% c("annots", "indep"))
+
+  stopifnot(candidate_modules %in% 1:n_modules)
+
+  if (type == "annots") {
+
+    stopifnot(!is.null(tb_act_annots))
+    candidate_modules <- sort(unique(candidate_modules))
+    stopifnot(all.equal(candidate_modules, sort(unique(tb_act_annots$module))))
+
+  }
+
+  check_natural_(q)
+  check_natural_(p0_sub)
+  check_natural_(max_nb_act_snps_per_locus)
+  check_natural_(maxit)
+  check_positive_(rbeta_sh1_rr)
+
+  if (!is.null(excluded_act_snps)) {
+    check_natural_(excluded_act_snps)
+  }
+
+  if (!is.null(user_locus_ids)) {
+    check_natural_(user_locus_ids)
+  }
+
+
+  if (!is.null(V)) {
+
+    if (is.null(tb_act_annots)) {
+
+      stop("Object tb_act_annots must be non-NULL if V is non-NULL.")
+
+    }
+
+    vec_act_annots <- sort(unique(tb_act_annots$act_mark))
+    stopifnot(all(V %in% 0:1))
+
+    stopifnot(sum(rowSums(V[, vec_act_annots, drop = FALSE]) > 0) >= p0_sub) # the number of SNPs having at least one mark
+    # must be larger than the number of active SNPs driven by annots
+  }
+
+  n_loci <- list_loci$n_bl
+  n_modules <- ifelse(is.null(list_partition$bl_y), 1, list_partition$bl_y$n_bl)
+
+  tb_act_snps <-  map_act_snps_modules <- map_act_snps_responses <- NULL
+  p0_current <- 0
+  it <- 1
+
+  repeat{
+
+    if (it > 1) { # If we still have p0_current < p0_sub after walking through all the loci, do a second (third, fourth, etc if needed) round
+
+      # Exclude from the list of candidate active SNPs, those that have already been selected in the previous iteration(s)
+      #
+      excluded_act_snps <- unique(c(excluded_act_snps, tb_act_snps[,2]))
+
+      # Choose the order in which we will walk through the loci based on the number of already assigned active SNPs in these loci: start with the loci with few active SNPs
+      #
+      locus_ids <-  sort_loci_by_number_of_act_snps_(tb_act_snps)
+
+      if (!is.null(user_locus_ids)) {
+
+        stopifnot(length(user_locus_ids) == n_loci)
+
+        # Combine the info from the two locus_ids vectors in order to start walking through the loci with the fewest already assigned active SNPs, overall
+        # i.e., sum the ranks of the loci in both user_locus_ids and locus_ids and sort the loci from that with the smaller summed rank to the largest summed rank
+        #
+        locus_ids <- order(order(user_locus_ids) + order(locus_ids))
+
+      }
+
+    } else if (is.null(user_locus_ids)) {
+
+      locus_ids <- sample(1:n_loci)
+
+    } else {
+
+      locus_ids <- user_locus_ids
+
+    }
+
+    # Assign active SNPs locus by locus
+    #
+    for (ll in locus_ids) {
+
+      if (p0_current < p0_sub) {
+
+        if (!is.null(V)) { # Real matrix of annots used and active SNPs triggered by annots (list_map_annots)
+
+          # The candidate SNPs in the locus are those which are concerned by at least one active mark
+          #
+          V_ll_act_annots <- V[list_loci$vec_fac_bl == ll, vec_act_annots, drop = FALSE]
+          V_ll_act_annots_nonzero <- V_ll_act_annots[rowSums(V_ll_act_annots)>0,, drop = FALSE]
+
+          candidate_act_snps_ll <- which(rownames(V) %in% rownames(V_ll_act_annots_nonzero))
+
+        } else { # Simulated matrix of annots used (will be generated below, based on the generated active SNP pattern --> so no constraint)
+          # and/or active SNPs not triggered by annots (list_map_indep)
+
+          candidate_act_snps_ll <- which(list_loci$vec_fac_bl == ll)
+
+        }
+
+        if (!is.null(excluded_act_snps)) {
+
+          # Number of SNPs that are already active in the locus
+          #
+          nb_act_snps_excluded_ll <- length(intersect(candidate_act_snps_ll, excluded_act_snps))
+          candidate_act_snps_ll <- setdiff(candidate_act_snps_ll, excluded_act_snps)
+
+        } else {
+
+          nb_act_snps_excluded_ll <- 0
+
+        }
+
+
+        if (length(candidate_act_snps_ll) > 0 & # At least one candidate active SNP in the locus
+            max_nb_act_snps_per_locus - nb_act_snps_excluded_ll > 0) { # The maximum number of active SNPs per locus has not been reached yet
+
+          if (length(candidate_act_snps_ll) == 1) {
+
+            p0_ll <- 1
+
+            act_snps_ll <- candidate_act_snps_ll
+
+          } else {
+
+            p0_ll <- sample(1:min(c(max_nb_act_snps_per_locus - nb_act_snps_excluded_ll, # substract the number of SNPs already active in the locus from the total number of active SNPs allowed per locus
+                                    length(candidate_act_snps_ll),
+                                    p0_sub - p0_current)),
+                            size = 1)
+
+            act_snps_ll <- sort(sample(candidate_act_snps_ll,
+                                       size = p0_ll)) # choose up to max_nb_act_snps_per_locus active SNPs for each locus ll
+            # among the candidate active SNPs in ll
+          }
+
+          tb_act_snps <- rbind(tb_act_snps, cbind(rep(ll, length(act_snps_ll)), act_snps_ll))
+
+          for(ss in act_snps_ll) {
+
+
+            # ASSIGN ACTIVE MODULES TO EACH ACTIVE SNP SS
+            #
+            if (is.null(V)) { # Simulated matrix of annots and/or active SNPs not triggered by annots (list_map_indep)
+
+              candidate_act_mm_for_ss <- candidate_modules
+
+            } else { # Real matrix of annots and active SNPs triggered by annots (list_map_annots)
+
+              # The candidate module(s) for SNP ss are those whose active mark(s) concern ss
+              #
+              ss_name <- rownames(V)[ss]
+              candidate_act_mm_for_ss <- sort(unique(tb_act_annots$module[tb_act_annots$act_mark %in% vec_act_annots[which(V_ll_act_annots_nonzero[ss_name, ] > 0)]]))
+
+            }
+
+            if (length(candidate_act_mm_for_ss) > 1 & !is.null(tb_act_annots)) { # Choose the number of modules associated with a given SNP
+              # based on the number of modules concerned by a same active mark
+
+              pr_module_assoc_ss <- sample(table(tb_act_annots$act_mark) / length(unique(tb_act_annots$module)), 1)
+
+              mm_assoc_ss <- sort(sample(candidate_act_mm_for_ss,
+                                         size = ceiling(pr_module_assoc_ss * length(candidate_act_mm_for_ss))))
+
+            } else { # Only enters here when annots_vs_indep = 0 (and test ranges of annots_vs_indep only for n_modules = 1, so ok)
+
+              mm_assoc_ss <- candidate_act_mm_for_ss
+
+            }
+
+            map_act_ss_modules <- rep(FALSE, n_modules)
+            map_act_ss_modules[mm_assoc_ss] <- TRUE
+            map_act_snps_modules <- rbind(map_act_snps_modules, map_act_ss_modules)
+
+
+            # ASSIGN RESPONSE(S) TO EACH ACTIVE SNP SS (WITHIN EACH MODULE ASSOCIATED WITH SS)
+            #
+            rr_assoc_ss <- rep(NA, n_modules)
+
+            rr_assoc_ss[mm_assoc_ss] <- sapply(mm_assoc_ss, function(mm) {
+
+              # Its probability to be associated with each response in the active module mm, right-skewed distribution if rbeta_sh1_rr > 1
+              #
+              pr_within_module_assoc_ss <- rbeta(1, shape1 = rbeta_sh1_rr, shape2 = 1)
+
+              if (n_modules > 1) {
+
+                # Retrieve all the responses within module mm
+                #
+                rr_in_mm <- which(list_partition$bl_y$vec_fac_bl == mm)
+                n_rr_in_mm <- length(rr_in_mm)
+
+              } else { # list_partition$bl_y does not exist
+
+                rr_in_mm <- 1:q
+                n_rr_in_mm <- q
+
+              }
+
+              list(sort(sample(rr_in_mm, size = ceiling(n_rr_in_mm * pr_within_module_assoc_ss))))
+
+            } )
+
+            map_act_snps_responses <- rbind(map_act_snps_responses, rr_assoc_ss)
+
+          }
+
+          # Bump the counter for the number of active SNPs currently assigned
+          #
+          p0_current <- p0_current + p0_ll
+
+        }
+
+      }
+
+    }
+
+    it <- it + 1
+
+    if (p0_current == p0_sub | it > maxit) { # the total number of active SNPs to be assigned has been reach.
+
+      if ((type == "annots" & all(colSums(map_act_snps_modules[, candidate_modules, drop = FALSE]) > 0)) |  # make sure that all modules are concerned by at least one active SNP,
+          # as each module is assigned to at least one active mark
+          # (in the real_annots_mat case, does not mean that all active annots
+          # are concerned by at least one SNP, unfortunately...
+          # But this is ensured when the annots are simulated, even when using real SNPs).
+          type == "indep" |
+          it > maxit) {
+
+        break
+
+      }
+
+    }
+
+  }
+
+  tb_act_snps <- as.data.frame(tb_act_snps)
+  names(tb_act_snps) <- c("locus", "act_snp")
+
+  stopifnot(p0_current == p0_sub)
+
+  if (type == "annots") {
+
+    stopifnot(all(colSums(map_act_snps_modules[, candidate_modules, drop = FALSE]) > 0)) # each module must be associated with at least one active SNP (because to each module is attributed at least one active mark)
+
+  }
+
+  rownames(map_act_snps_modules) <- rownames(map_act_snps_responses) <- paste0("act_snp_", tb_act_snps$act_snp)
+  colnames(map_act_snps_modules) <- colnames(map_act_snps_responses) <- paste0("module_", 1:n_modules)
+
+  stopifnot(all(rowSums(map_act_snps_modules) > 0))                              # each active SNP must be associated with at least one module
+  stopifnot(identical(!is.na(map_act_snps_responses), map_act_snps_modules))     # each pair of active SNP / active module must have at least one SNP-response association
+  # and there must be no association for inactive pairs.
+
+  stopifnot(nrow(tb_act_snps) == p0_sub)
+
+  # Reorder dataframes so they look nicer
+  #
+  ord_snps <- order(tb_act_snps$act_snp)
+
+  map_act_snps_modules <- map_act_snps_modules[ord_snps, , drop = FALSE]
+  map_act_snps_responses<- map_act_snps_responses[ord_snps, , drop = FALSE]
+
+  tb_act_snps <- tb_act_snps[ord_snps, , drop = FALSE]
+  rownames(tb_act_snps) <- NULL
+
+  create_named_list_(tb_act_snps,
+                    map_act_snps_modules,
+                    map_act_snps_responses)
+
+}
+
+generate_phenos_from_annots <- function(list_map,           # object supplied by the set_locus_and_module_pattern_from_annots function
+                                        prop_act,           # approximate proportion of non-zero predictor-response effects
+                                        sd_act_prob,        # standard deviation for the effects of hotspot propensities and annots (within probit link - Gaussian effects)
+                                        sd_act_beta,        # standard deviation for the regression effects of between predictors and responses (Gaussian effects)
+                                        sd_err,             # response error standard deviation
+                                        max_tot_pve = NULL, # maximum proportion of response variance explained by the SNPs, for each response
+                                        rho_min = 0,        # minimum block equicorrelation level for the responses
+                                        rho_max = 0.5       # maximum block equicorrelation level for the responses
+) {
+
+
+  if (!xor(is.null(max_tot_pve), is.null(sd_act_beta))) {
+
+    stop("Either sd_act_beta or max_tot_pve must be provided.")
+
+  }
+
+  if (!is.null(sd_act_beta)) {
+    check_positive_(sd_act_beta)
+  } else {
+    check_zero_one_(max_tot_pve)
+  }
+
+
+  V <- list_map$V
+  stopifnot(all(V %in% 0:1))
+
+  X <- list_map$X
+
+  n <- nrow(X)
+  p <- ncol(X)
+  r <- ncol(V)
+  q <- list_map$q
+
+  stopifnot(nrow(V) == p)
+
+  if (!is.null(list_map$list_partition$bl_y)) { # more than a single module
+
+    list_modules <- list_map$list_partition$bl_y
+    n_modules <- list_modules$n_bl
+    stopifnot(list_modules$n_var_blocks == q)
+
+  } else {
+
+    n_modules <- 1
+
+  }
+
+  # Gather patterns for effects driven by the annots
+  #
+  if (!is.null(list_map$list_map_annots)) {
+
+    tb_act_annots <- list_map$list_map_annots$tb_act_annots
+    tb_act_snps_annots <- list_map$list_map_annots$tb_act_snps
+    map_act_snps_responses_annots <- list_map$list_map_annots$map_act_snps_responses
+    map_act_snps_modules_annots <- list_map$list_map_annots$map_act_snps_modules
+
+  }
+
+  # Gather patterns for effects not driven by the annots
+  #
+  if (!is.null(list_map$list_map_indep)) {
+
+    tb_act_snps_indep <- list_map$list_map_indep$tb_act_snps
+    map_act_snps_responses_indep <- list_map$list_map_indep$map_act_snps_responses
+    map_act_snps_modules_indep <- list_map$list_map_indep$map_act_snps_modules
+
+  }
+
+
+  # Set the sparsity level
+  #
+  n0 <- -2.5
+  W_arg <- matrix(n0, nrow = p, ncol = q)
+
+  for (mm in 1:n_modules) {
+
+    # ADD EFFECTS DRIVEN BY THE MARKS
+    #
+    if (!is.null(list_map$list_map_annots)) {
+
+      xi_mm <- rep(0, r)
+      act_annots_mm <- tb_act_annots$act_mark[tb_act_annots$module == mm]
+
+      # log normal: positive effect --> SNP within an mark favours its potential associations with transcripts
+      #
+      xi_mm[act_annots_mm] <-  rlnorm(length(act_annots_mm), meanlog = 1, sdlog = sd_act_prob)
+
+      for (ss in which(map_act_snps_modules_annots[, mm])) {
+
+        act_snp_ss <- tb_act_snps_annots$act_snp[ss]
+        act_resp_ss_mm <- unlist(map_act_snps_responses_annots[ss, mm])
+
+        # Divide the effects by the number of active annots that concern SNP ss
+        # in order to prevent SNPs concerned by many annots to dominate over the
+        # others (SNPs concerned by many annots should not necessarily be larger
+        # hotspots than the others)
+        # sum(V[act_snp_ss, act_annots_mm]): since V is binary OK
+        #
+        W_arg[act_snp_ss, act_resp_ss_mm] <- W_arg[act_snp_ss, act_resp_ss_mm] + as.numeric(V[act_snp_ss, , drop = FALSE] %*% xi_mm) / sum(V[act_snp_ss, act_annots_mm])
+
+      }
+
+    }
+
+
+    # ADD EFFECTS NOT DRIVEN BY THE MARKS
+    #
+    if (!is.null(list_map$list_map_indep)) {
+
+      for (ss in which(map_act_snps_modules_indep[, mm])) {
+
+        act_snp_ss <- tb_act_snps_indep$act_snp[ss]
+        act_resp_ss_mm <- unlist(map_act_snps_responses_indep[ss, mm])
+
+        # SNP-specific effect
+        #
+        theta_ss_mm <- rlnorm(1, meanlog = 1, sdlog = sd_act_prob)
+
+        W_arg[act_snp_ss, act_resp_ss_mm] <- W_arg[act_snp_ss, act_resp_ss_mm] + theta_ss_mm
+
+      }
+
+    }
+
+  }
+
+  W <- apply(W_arg, 2, function(W_arg_col) rnorm(p, mean = W_arg_col, sd = 1))
+
+  # prop_act is the desired proportion of associations
+  #
+  pat <- beta <- matrix(0, nrow = p, ncol = q)
+  pat[W >= quantile(W, probs = 1 - prop_act)] <- 1
+
+  # Make sure that at least one association for each pair of active SNP/active module
+  #
+  add_missing_activations <- function(pat,
+                                      list_map,
+                                      n_modules) {
+
+    if (!is.null(list_map)) {
+
+      for (mm in 1:n_modules) {
+
+        for (ss in which(list_map$map_act_snps_modules[, mm])) {
+
+          act_snp_ss <- list_map$tb_act_snps$act_snp[ss]
+          act_resp_ss_mm <- unlist(list_map$map_act_snps_responses[ss, mm])
+
+          if (sum(pat[act_snp_ss, act_resp_ss_mm]) == 0) {
+
+            pat[act_snp_ss, sample(act_resp_ss_mm, 1)] <- 1
+
+          }
+        }
+
+      }
+
+    }
+
+    pat
+
+  }
+
+  pat <- add_missing_activations(pat, list_map$list_map_annots, n_modules)
+  pat <- add_missing_activations(pat, list_map$list_map_indep, n_modules)
+
+  vec_rho <- runif(n_modules, min = rho_min, max = rho_max)
+
+  if (n_modules > 1) {
+
+    # for the case the modules do not have the same number of responses
+    # (not handled by generate_phenos, which would split by blocks of equal size)
+    #
+    list_phenos <- lapply(1:n_modules, function(mm) {
+      q_m <- sum(list_modules$vec_fac_bl == mm)
+      echoseq::generate_phenos(n, q_m, cor_type = "equicorrelated",
+                               vec_rho = vec_rho[mm],
+                               n_cpus = 1, var_err = sd_err^2)$phenos
+    })
+
+    phenos <- do.call(cbind, list_phenos)
+
+  } else {
+
+    phenos <- echoseq::generate_phenos(n, q, cor_type = "equicorrelated",
+                                       vec_rho = vec_rho,
+                                       n_cpus = 1, var_err = sd_err^2)$phenos
+
+  }
+
+  ind_p0 <- which(rowSums(pat)>0)
+  ind_q0 <- which(colSums(pat)>0)
+
+  if(is.null(max_tot_pve)) {
+
+    beta[pat == 1] <- rnorm(sum(pat == 1), sd = sd_act_beta)
+
+  } else {
+
+    vec_maf <- apply(X, 2, mean) / 2
+    var_err <- apply(phenos, 2, var) # empirical error variance
+
+    max_per_resp <- max(colSums(pat))
+
+    pve_per_snp <- max_tot_pve / max_per_resp
+
+    # The proportion of phenotypic variance explained per SNP for phenotype k is
+    # computed using the assumption of independent SNPs for simplicity (such an
+    # assumption is commonly made for such computation). In this case we have, for
+    # SNP X_j (assuming that the true effects \beta_{jk} are known):
+    #
+    # pve_j = var(X_j \beta_{jk} | \beta_{jk}) / (tot_var_expl_k + var_err_k),
+    #
+    # where tot_var_expl_k is the total variance explained by the SNPs for
+    # phenotype k.
+    #
+    # We estimate the numerator using
+    # var_hat(X_j \beta_{jk} | \beta_{jk}) = \beta_{jk}^2 * var_hat(X_j) =
+    #                                        \beta_{jk}^2 * 2 * m_hat_j * (1 - m_hat_j),
+    # where m_hat_j is the empricial minor allele frequency of X_j.
+    #
+    # We therefore set the regression effects as
+    #
+    # \beta_{jk} <- sqrt{ pve_j * (tot_var_expl_k + var_err_k) / [ 2 * m_hat_j * (1 - m_hat_j) ] }
+    #
+    # Natural selection: the relationship between \beta_{jk} and m_hat_j is
+    # roughly inverse (for m_hat_j between 0 and 0.5).
+
+    beta[, ind_q0] <- sapply(ind_q0, function(k) {
+
+      p0_k <- sum(pat[,k])
+      vec_pve_per_snp <- rbeta(p0_k, shape1 = 1, shape2 = 5) # left-skewed Beta distribution,
+      # to give more weight to smaller effect sizes
+      vec_pve_per_snp <- vec_pve_per_snp / sum(vec_pve_per_snp) * pve_per_snp * p0_k
+
+      tot_var_expl_k <- pve_per_snp * p0_k * var_err[k] / (1 - pve_per_snp * p0_k)
+
+      vec_maf_act <- vec_maf[pat[,k] == 1]
+      vec_var_act <- 2 * vec_maf_act * (1 - vec_maf_act)
+
+      beta_k <- rep(0, p)
+      beta_k[pat[,k] == 1] <- sqrt((tot_var_expl_k + var_err[k]) * vec_pve_per_snp / vec_var_act)
+
+      # switches signs with probabilty 0.5
+      beta_k[pat[,k] == 1] <- sample(c(1, -1), p0_k, replace = TRUE) * beta_k[pat[,k] == 1]
+
+      beta_k
+    })
+
+  }
+
+  # Y <- phenos + scale(X) %*% beta
+  Y <- phenos + X %*% beta #######################
+
+  stopifnot(identical(pat>0, abs(beta)>0))
+
+  create_named_list_(Y,
+                    pat,
+                    beta,
+                    ind_p0, # all the variables involved in associations, can be larger than p0
+                    ind_q0)
+
+
+}
+
+generate_binary_annots <- function(p,
+                                   r,
+                                   list_map_annots = NULL # object obtained from the set_locus_and_module_pattern_from_annots function, if NULL, annots drawn from noise
+) {
+
+  # Each SNP has a given probability of falling in annots
+  #
+  prob_annots <- rbeta(p, shape1 = 1, shape2 = 25) # left-skewed (a few SNPs will have the tendency to fall in many annots)
+
+  # Simulate a matrix of binary annots
+  #
+  V <- t(sapply(prob_annots, function(pm) sample(c(0, 1), replace = TRUE, size = r, prob = c(1-pm, pm))))
+
+  # Make sure that each mark concerns at least two SNPs
+  # (otherwise not enough information to be acquired from the mark)
+  #
+  V <- apply(V, 2, function(V_l) {
+
+    if (sum(V_l) < 2) {
+      V_l[V_l == 0][sample(1:(p-sum(V_l)), size = 2 - sum(V_l))] <- 1
+    }
+    V_l
+  })
+
+  if (!is.null(list_map_annots)) {
+
+    # Add a one for each active entry of SNP / mark
+    #
+    map_act_snps_modules <- list_map_annots$map_act_snps_modules
+    tb_act_annots <- list_map_annots$tb_act_annots
+    tb_act_snps <- list_map_annots$tb_act_snps
+
+    n_modules <- ncol(map_act_snps_modules)
+
+    for (mm in 1:n_modules) {
+
+      act_annots_mm <- tb_act_annots$act_mark[tb_act_annots$module == mm]
+
+      act_snps_mm <- tb_act_snps$act_snp[map_act_snps_modules[, mm]]
+
+      V[act_snps_mm, act_annots_mm] <- 1
+    }
+
+  }
+
+  colnames(V) <- paste0("Annot_z_", 1:r)
+  V
+
+}
+
+
+generate_snps_from_loci <- function(n,
+                                    list_loci,
+                                    real_snp_mat = NULL,
+                                    rho_min = NULL,
+                                    rho_max = NULL,
+                                    maf_thres = 0.05,
+                                    min_dist = 0) {
+
+  check_natural_(n)
+  check_natural_(min_dist, zero_ok = TRUE)
+  check_zero_one_(maf_thres)
+
+  p <- list_loci$n_var_blocks
+  n_loci <- list_loci$n_bl
+
+  if (is.null(real_snp_mat)) {
+
+    stopifnot(min_dist == 0) # simulated SNPs so no minimal distance to be specified
+
+    check_zero_one_(rho_min)
+    check_zero_one_(rho_max)
+
+    vec_rho <- runif(n_loci, min = rho_min, max = rho_max)
+
+    # echoseq::generate_snps(n = n, p = p, vec_rho = vec_rho, cor_type = "autocorrelated")$snps
+
+    # for the case the loci do not have the same number of SNPs
+    # (not handled by generate_snps, which would split by blocks of equal size)
+    #
+    list_snps <- lapply(1:n_loci, function(ll) {
+      p_l <- sum(list_loci$vec_fac_bl == ll)
+      generate_snps(n = n, p = p_l, vec_rho = vec_rho[ll],
+                    cor_type = "autocorrelated",
+                    vec_maf = runif(p_l, min = maf_thres, max = 0.5))$snps
+    })
+
+    X <- do.call(cbind, list_snps)
+
+  } else {
+
+    stopifnot(is.null(rho_min) & is.null(rho_max))
+
+    real_n <- nrow(real_snp_mat)
+    stopifnot(real_n >= n)
+    stopifnot(all(as.vector(real_snp_mat) %in% c(0:2)))
+
+
+    # Sample loci from the real snp matrix
+    #
+    real_snp_mat <- real_snp_mat[sample(1:real_n, n), , drop = FALSE]
+
+    # Exclude rare variants after restricting to the considered samples
+    #
+    maf <- apply(real_snp_mat, 2, function(s) mean(s) / 2)
+    real_snp_mat <-  real_snp_mat[, maf > maf_thres, drop = FALSE]
+
+    real_p <- ncol(real_snp_mat)
+    stopifnot(real_p > p + min_dist * n_loci) # in order to have sufficient SNPs to draw loci from (randomly)
+
+    vec_ch <- make_chunks_(1:real_p, n_loci)
+    len_loci <- table(list_loci$vec_fac_bl)
+
+    stopifnot(all(sapply(vec_ch, length) >= len_loci)) # each loci must fit within its corresponding chunk
+    stopifnot(min_dist %in% 0:floor((real_p - sum(len_loci)) / n_loci))
+
+    vec_ind <- unlist(lapply(1:n_loci, function(ll) {
+      ch <- vec_ch[[ll]]
+      len <- len_loci[ll]
+
+      start_choices <- ch[1:(length(ch) - len - min_dist)]
+
+      if (length(start_choices) > 1) {
+        start <- sample(start_choices, size = 1)
+      } else {
+        start <- start_choices
+      }
+
+      start:(start + len - 1)
+
+    }))
+
+    X <- real_snp_mat[, vec_ind, drop = FALSE]
+
+  }
+
+  rownames(X) <- paste0("ind_", 1:nrow(X)) # in order to have the same sample
+  # names as in the simulated
+  # response matrix
+
+  X
+
+}

@@ -4,8 +4,15 @@
 \alias{generate_snps}
 \title{Generate SNP data with prespecified spatial correlation structure.}
 \usage{
-generate_snps(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
-  n_cpus = 1, user_seed = NULL)
+generate_snps(
+  n,
+  p,
+  cor_type = NULL,
+  vec_rho = NULL,
+  vec_maf = NULL,
+  n_cpus = 1,
+  user_seed = NULL
+)
 }
 \arguments{
 \item{n}{Number of observations.}
