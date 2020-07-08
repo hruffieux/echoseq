@@ -14,8 +14,6 @@ principles of population genetics (Hardy–Weinberg equilibrium,
 linkage-disequilibrium, natural selection, pleiotropic control, sparsity 
 assumptions, etc).
 
-Details in H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient inference 
-for genetic association studies with multiple outcomes, *Biostatistics*, 2017. 
 
 ## Warning
 
@@ -34,7 +32,7 @@ devtools::install_github("hruffieux/echoseq", ref = "devel")
 
 ## License and authors
 
-This software uses the GPL v2 license, see [LICENSE](LICENSE).
+This software uses the GPL v3 license, see [LICENSE](LICENSE).
 Authors and copyright are provided in [DESCRIPTION](DESCRIPTION).
 
 ## Issues
