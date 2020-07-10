@@ -1,24 +1,62 @@
+#' Epigenome-driven QTL mapping
+#'
+#' @examples
+#' user_seed <- 123; set.seed(user_seed)
+#'
+#' # Number of samples
+#' #
+#' n <- 500
+#'
+#' # Loci
+#' #
+#' n_loci <- 20
+#' mean_locus_size <- 100
+#' p0 <- 10
+#'
+#' # Modules of traits
+#' #
+#' n_modules <- 5
+#' mean_module_size <- 50
+#'
+#' # Autocorrelation within loci and equicorrelation within trait modules
+#' #
+#' rho_min_x <- rho_min_y <- 0.5
+#' rho_max_x <- rho_max_y <- 0.9
+#'
+#' # Annotations
+#' #
+#' r <- 200
+#' r0 <- 10
+#'
+#' # Association pattern
+#' #
+#' prop_act <- 0.1
+#' max_tot_pve <- 0.5
+#'
+#' list_assoc <- generate_dependence_from_annots(n, n_loci, mean_locus_size, p0,
+#'                                               rho_min_x, rho_max_x,
+#'                                               n_modules, mean_module_size,
+#'                                               rho_min_y, rho_max_y, r, r0,
+#'                                               prop_act, max_tot_pve,
+#'                                               seed = user_seed)
+#'
 #' @export
 #'
 generate_dependence_from_annots <- function(n,
-                                            rho_min_x,
-                                            rho_max_x,
                                             n_loci,
                                             mean_locus_size,
-                                            min_dist,
                                             p0,
-                                            rho_min_y,
-                                            rho_max_y,
+                                            rho_min_x,
+                                            rho_max_x,
                                             n_modules,
                                             mean_module_size,
+                                            rho_min_y,
+                                            rho_max_y,
+                                            r, r0,
                                             prop_act,
-                                            sd_act_prob,
-                                            sd_err,
                                             max_tot_pve,
-                                            r0, r,
-                                            annots_vs_indep,
-                                            rbeta_sh1_rr,
-                                            tpois_lam_act_annots_mm,
+                                            annots_vs_indep = 1,
+                                            min_dist = 0,
                                             maf_thres = 0.05,
                                             max_nb_act_snps_per_locus = 3,
                                             vec_q = NULL,
@@ -26,11 +64,22 @@ generate_dependence_from_annots <- function(n,
                                             real_annot_mat = NULL,
                                             sd_act_beta = NULL,
                                             q_pres_annot_loci = NULL,
+                                            bin_annot_freq = 0.05,
                                             candidate_modules_annots = NULL,
+                                            tpois_lam_act_annots_mm = 1,
+                                            sd_act_prob = 1,
+                                            sd_err = 1,
+                                            rbeta_sh1_rr = 1,
                                             n_cpus = 1,
                                             maxit = 1e4,
-                                            module_specific = FALSE) {
+                                            module_specific = FALSE,
+                                            seed = NULL) {
 
+  check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
+  if (!is.null(user_seed)){
+    RNGkind("L'Ecuyer-CMRG") # ensure reproducibility when using mclapply
+    set.seed(user_seed)
+  }
 
   # SOME SANITY CHECKS
   #
@@ -42,6 +91,9 @@ generate_dependence_from_annots <- function(n,
   check_natural_(n_modules)
   check_natural_(min_dist, zero_ok = TRUE)
   check_zero_one_(annots_vs_indep)
+
+  stopifnot(annots_vs_indep > 0) # we enforce some annotation-triggered effects
+
 
   check_structure_(module_specific, "vector", "logical")
 
@@ -55,26 +107,15 @@ generate_dependence_from_annots <- function(n,
   check_structure_(real_annot_mat, "matrix", "numeric", null_ok = TRUE, na_ok = TRUE)
   check_structure_(real_snp_mat, "matrix", "numeric", null_ok = TRUE)
 
+  if (is.null(candidate_modules_annots)) { # means: all modules considered.
+    candidate_modules_annots <- 1:n_modules
+  }
 
-  if (!is.null(candidate_modules_annots)) {
+  stopifnot(candidate_modules_annots %in% 1:n_modules)
+  candidate_modules_annots <- sort(unique(candidate_modules_annots))
 
-    stopifnot(candidate_modules_annots %in% 1:n_modules)
-    candidate_modules_annots <- sort(unique(candidate_modules_annots))
-    stopifnot(length(candidate_modules_annots) < n_modules) # if FALSE, all modules are considered for annot-triggered associations, which is equivalent to is.null(candidate_modules_annots) and annots_vs_indep = 1
-    stopifnot(annots_vs_indep > 0)
-
-    if (!is.null(tb_act_annots)) {
-
-      stopifnot(all.equal(sort(unique(tb_act_annots$module)), candidate_modules_annots))
-
-    }
-
-    candidate_modules_indep <- setdiff(1:n_modules, candidate_modules_annots)
-
-  } else { # all the modules are considered for both annot-triggered and independent associations
-
-    candidate_modules_annots <- candidate_modules_indep <- 1:n_modules
-
+  if (length(candidate_modules_annots) == n_modules) {
+    stopifnot(all.equal(annots_vs_indep, 1)) # there is no module left in which associations can be simulated independently of the marks setdiff(1:n_modules, candidate_modules_annots)
   }
 
   if (!is.null(real_annot_mat)) {
@@ -196,30 +237,31 @@ generate_dependence_from_annots <- function(n,
     # i.e. case where not all modules have at least one active SNPs for the annots
     # can occur when !is.null(real_annot_mat)
 
-    list_map <- tryCatch({
+  list_map <- tryCatch({
       set_locus_and_module_pattern_from_annots(n,
-                                     real_annot_mat,
-                                     q_pres_annot_loci,
-                                     r,
-                                     r0_list_map, # if !bool_real_annots, tb_act_annots is provided so no need to provide r0 (must be NULL)
-                                     tb_act_annots,
-                                     tpois_lam_act_annots_mm,
-                                     real_snp_mat,
-                                     rho_min_x,
-                                     rho_max_x,
-                                     n_loci,
-                                     mean_locus_size,
-                                     min_dist,
-                                     p0,
-                                     max_nb_act_snps_per_locus,
-                                     maf_thres,
-                                     n_modules,
-                                     mean_module_size,
-                                     vec_q = NULL,
-                                     candidate_modules_annots = NULL, # all modules are considered equally for annot-triggered and indep associations
-                                     annots_vs_indep,
-                                     rbeta_sh1_rr,
-                                     n_cpus = 1)
+                                               real_annot_mat,
+                                               q_pres_annot_loci,
+                                               r,
+                                               r0_list_map, # if !bool_real_annots, tb_act_annots is provided so no need to provide r0 (must be NULL)
+                                               tb_act_annots,
+                                               tpois_lam_act_annots_mm,
+                                               bin_annot_freq,
+                                               real_snp_mat,
+                                               rho_min_x,
+                                               rho_max_x,
+                                               n_loci,
+                                               mean_locus_size,
+                                               min_dist,
+                                               p0,
+                                               max_nb_act_snps_per_locus,
+                                               maf_thres,
+                                               n_modules,
+                                               mean_module_size,
+                                               vec_q,
+                                               candidate_modules_annots, # all modules are considered equally for annot-triggered and indep associations
+                                               annots_vs_indep,
+                                               rbeta_sh1_rr,
+                                               n_cpus)
     }, error=function(e){})
 
     it <- it + 1
@@ -242,7 +284,8 @@ generate_dependence_from_annots <- function(n,
                                         sd_err,
                                         max_tot_pve,
                                         rho_min_y,
-                                        rho_max_y)
+                                        rho_max_y,
+                                        n_cpus)
 
   phenos <- list_Y$Y
 
@@ -259,7 +302,7 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
                                                      r0,                     # total number of candidate active annots (if NULL, all r annots; if small, the same annots will tend to be active for several modules); if 1, mostly 1-2 active annots in each module, 5, mean number of annots approx 5
                                                      tb_act_annots,           # table mapping the modules with their corresponding active annots. Must be obtained using the set_act_annots function. tpois_lam_act_annots_mm must be NULL as unused. tb_act_annots must be NULL if !is.null(real_annot_mat), and r0 and tb_act_annots cannots both be non-NULL.
                                                      tpois_lam_act_annots_mm, # zero-truncated Poisson parameter for drawing the number of active annots per module
-
+                                                     bin_annot_freq,          # minimal frequency of SNPs concerned by a given annotation
 
                                                      # PREDICTORS (SNPS)
                                                      #
@@ -280,8 +323,6 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
                                                      vec_q,                   # exact module sizes provided. Either mean_module_size or vec_q must be NULL.
                                                      candidate_modules_annots, # the subset of module ids where all associations are triggered by annots.
                                                      # the complement, setdiff(1:n_modules, candidate_modules_annots) are the modules where associations are independent of annots
-                                                     # if NULL, all n_modules will be considered for both annot-triggered and independent associations
-                                                     # ASSOCIATIONS
                                                      #
                                                      annots_vs_indep, # proportion of hotspots driven/triggered by the annots
                                                      rbeta_sh1_rr,   # Beta distribution shape2 parameter for the proportion of responses associated with an active SNP (in a given module)
@@ -329,7 +370,7 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
 
   # List of loci, positions etc
   #
-  list_loci <- set_blocks_(p, pos_loci, n_cpus = 1)
+  list_loci <- set_blocks_(p, pos_loci, n_cpus = n_cpus)
 
 
   # SOME FURTHER SANITY CHECKS
@@ -430,10 +471,9 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
       #
       V <- real_annot_mat[match(colnames(X), rownames(real_annot_mat)), , drop = FALSE] # if a SNP is absent from in real_annot_mat, NA row produced
 
-      # remove annots whose frequency is too low to be informative (nrow(V) * min_freq = 5)
+      # remove annots whose frequency is too low to be informative
       #
-      V <- V[, colSums(V) >= 5, drop = FALSE] # remove annots that concern too few SNPs
-      V <- V[, colSums(V) <= 2*nrow(V)/3, drop = FALSE] # remove annots that concern too many SNPs. For simulations more than nrow(V)-10 as we simulate positive effects only (lognormal)
+      V <- rm_bin_annot_freq_(V, bin_annot_freq)
 
       if (r < ncol(V)) {
         V <- V[, sort(sample(1:ncol(V), size = r)), drop = FALSE]
@@ -454,7 +494,6 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
 
     if (r > ncol(V)) {
 
-      print(ncol(V))
       r <- ncol(V)
 
       stopifnot(r*(1-q_pres_annot_loci) > 1) # at least one candidate annot to draw from
@@ -513,8 +552,8 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
       }
 
       tb_act_annots <- set_act_annots(candidate_modules_annots,
-                                     candidate_act_annots,
-                                     tpois_lam_act_annots_mm)
+                                      candidate_act_annots,
+                                      tpois_lam_act_annots_mm)
 
     }
 
@@ -529,6 +568,7 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
                                         list_partition,
                                         max_nb_act_snps_per_locus,
                                         rbeta_sh1_rr,
+                                        n_modules,
                                         candidate_modules = candidate_modules_annots,
                                         excluded_act_snps = NULL,
                                         tb_act_annots = tb_act_annots,
@@ -558,6 +598,8 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
 
   if (annots_vs_indep < 1) {
 
+    candidate_modules_indep <- setdiff(1:n_modules, candidate_modules_annots)
+
     list_map_indep <- choose_act_snps_("indep",
                                        q,
                                        p0_indep,
@@ -565,6 +607,7 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
                                        list_partition,
                                        max_nb_act_snps_per_locus,
                                        rbeta_sh1_rr,
+                                       n_modules,
                                        candidate_modules = candidate_modules_indep,
                                        excluded_act_snps = excluded_act_snps,
                                        tb_act_annots = list_map_annots$tb_act_annots,
@@ -594,17 +637,20 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
 
 
   list_map <- create_named_list_(X, V, q,
-                    pos_loci,
-                    pos_modules,
-                    list_partition,
-                    list_loci,
-                    list_map_annots,
-                    list_map_indep)
+                                 pos_loci,
+                                 pos_modules,
+                                 list_partition,
+                                 list_loci,
+                                 list_map_annots,
+                                 list_map_indep)
+
   class(list_map) <- "sim_map"
 
   list_map
 
 }
+
+
 
 
 set_act_annots_module_specific <- function(ind_r0, n_modules) {
@@ -707,8 +753,9 @@ sort_loci_by_number_of_act_snps_ <- function(tb_act_snps, n_loci) {
   tb_act_snps <- as.data.frame(tb_act_snps)
   names(tb_act_snps) <- c("locus", "act_snp")
 
+
   nb_act_snps_per_locus <- tb_act_snps[sample(1:nrow(tb_act_snps)), ] %>% group_by(.data$locus) %>% mutate(nb_act_snps = length(.data$act_snp))
-  nb_act_snps_per_locus <- unique(subset(nb_act_snps_per_locus, select = - .data$act_snp))
+  nb_act_snps_per_locus <- unique(nb_act_snps_per_locus[,c("locus", "nb_act_snps")])
   nb_act_snps_per_locus <- nb_act_snps_per_locus[order(nb_act_snps_per_locus$nb_act_snps), ]
 
   # the "sample()" is to shuffle the loci within groups of loci having no active SNP
@@ -728,6 +775,7 @@ choose_act_snps_ <- function(type,                     # flag "annots" or "indep
                              list_partition,            # module partition
                              max_nb_act_snps_per_locus, # maximum number of active SNPs per locus allowed
                              rbeta_sh1_rr,              # Beta distribution shape2 parameter for the proportion of responses associated with an active SNP (in a given module), rbeta_sh1_rr = 1, so left skewed
+                             n_modules,
                              candidate_modules,         # modules to be considered. Must match the modules in tb_act_annots if type == "annots"
                              excluded_act_snps = NULL,  # SNP ids excluded from the candidate active SNPs
                              tb_act_annots = NULL,       # dataframe of active annots for each module
@@ -745,6 +793,7 @@ choose_act_snps_ <- function(type,                     # flag "annots" or "indep
 
     stopifnot(!is.null(tb_act_annots))
     candidate_modules <- sort(unique(candidate_modules))
+
     stopifnot(all.equal(candidate_modules, sort(unique(tb_act_annots$module))))
 
   }
@@ -796,7 +845,7 @@ choose_act_snps_ <- function(type,                     # flag "annots" or "indep
 
       # Choose the order in which we will walk through the loci based on the number of already assigned active SNPs in these loci: start with the loci with few active SNPs
       #
-      locus_ids <-  sort_loci_by_number_of_act_snps_(tb_act_snps)
+      locus_ids <-  sort_loci_by_number_of_act_snps_(tb_act_snps, n_loci)
 
       if (!is.null(user_locus_ids)) {
 
@@ -1008,8 +1057,8 @@ choose_act_snps_ <- function(type,                     # flag "annots" or "indep
   rownames(tb_act_snps) <- NULL
 
   create_named_list_(tb_act_snps,
-                    map_act_snps_modules,
-                    map_act_snps_responses)
+                     map_act_snps_modules,
+                     map_act_snps_responses)
 
 }
 
@@ -1020,7 +1069,8 @@ generate_phenos_from_annots <- function(list_map,           # object supplied by
                                         sd_err,             # response error standard deviation
                                         max_tot_pve = NULL, # maximum proportion of response variance explained by the SNPs, for each response
                                         rho_min = 0,        # minimum block equicorrelation level for the responses
-                                        rho_max = 0.5       # maximum block equicorrelation level for the responses
+                                        rho_max = 0.5,       # maximum block equicorrelation level for the responses
+                                        n_cpus = 1
 ) {
 
 
@@ -1198,18 +1248,18 @@ generate_phenos_from_annots <- function(list_map,           # object supplied by
     #
     list_phenos <- lapply(1:n_modules, function(mm) {
       q_m <- sum(list_modules$vec_fac_bl == mm)
-      echoseq::generate_phenos(n, q_m, cor_type = "equicorrelated",
-                               vec_rho = vec_rho[mm],
-                               n_cpus = 1, var_err = sd_err^2)$phenos
+      generate_phenos(n, q_m, cor_type = "equicorrelated",
+                      vec_rho = vec_rho[mm],
+                      n_cpus = n_cpus, var_err = sd_err^2)$phenos
     })
 
     phenos <- do.call(cbind, list_phenos)
 
   } else {
 
-    phenos <- echoseq::generate_phenos(n, q, cor_type = "equicorrelated",
-                                       vec_rho = vec_rho,
-                                       n_cpus = 1, var_err = sd_err^2)$phenos
+    phenos <- generate_phenos(n, q, cor_type = "equicorrelated",
+                              vec_rho = vec_rho,
+                              n_cpus = n_cpus, var_err = sd_err^2)$phenos
 
   }
 
@@ -1280,10 +1330,10 @@ generate_phenos_from_annots <- function(list_map,           # object supplied by
   stopifnot(identical(pat>0, abs(beta)>0))
 
   create_named_list_(Y,
-                    pat,
-                    beta,
-                    ind_p0, # all the variables involved in associations, can be larger than p0
-                    ind_q0)
+                     pat,
+                     beta,
+                     ind_p0, # all the variables involved in associations, can be larger than p0
+                     ind_q0)
 
 
 }
@@ -1431,3 +1481,28 @@ generate_snps_from_loci <- function(n,
   X
 
 }
+
+rm_bin_annot_freq_ <- function(mat, bin_annot_freq) {
+
+  if (!is.null(bin_annot_freq)) {
+
+    bool_bin_annot_freq <- apply(mat, 2, function(x) {
+      if (check_binary_(x) &
+          (sum(x) < bin_annot_freq * length(x) | sum(1-x) < bin_annot_freq * length(x))) {
+        TRUE
+      } else {
+        FALSE
+      }
+    })
+
+    mat[, !bool_bin_annot_freq, drop = FALSE]
+
+  } else {
+
+    mat
+
+  }
+
+}
+
+

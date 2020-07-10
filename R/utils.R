@@ -16,6 +16,12 @@ check_natural_ <- function(x, zero_ok = FALSE, eps = .Machine$double.eps^0.75){
   }
 }
 
+
+check_binary_ <-function(x) {
+  identical(as.vector(x), as.numeric(as.logical(x)))
+}
+
+
 check_positive_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps)) {
     err_mess <- paste(deparse(substitute(x)), " must be positive.", sep="")

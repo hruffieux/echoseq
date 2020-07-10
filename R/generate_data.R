@@ -218,6 +218,9 @@ generate_phenos <- function(n, d, var_err = 1, cor_type = NULL, vec_rho = NULL,
   if (!is.null(cor_type))
     stopifnot(cor_type %in% c("autocorrelated", "equicorrelated"))
 
+  check_structure_(n_cpus, "vector", "numeric", 1)
+  check_natural_(n_cpus)
+
   if (is.null(cor_type)) {
 
     if (n_cpus > 1)
@@ -238,8 +241,6 @@ generate_phenos <- function(n, d, var_err = 1, cor_type = NULL, vec_rho = NULL,
                  "must be smaller than the number of phenotypes, d: ",
                  length(vec_rho), " > ", d, sep = ""))
 
-    check_structure_(n_cpus, "vector", "numeric", 1)
-    check_natural_(n_cpus)
 
     if (n_cpus > 1) {
       n_cpus_avail <- parallel::detectCores()
