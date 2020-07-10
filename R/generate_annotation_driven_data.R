@@ -1,47 +1,47 @@
-#' Epigenome-driven QTL mapping
-#'
-#' @examples
-#' user_seed <- 123; set.seed(user_seed)
-#'
-#' # Number of samples
-#' #
-#' n <- 500
-#'
-#' # Loci
-#' #
-#' n_loci <- 20
-#' mean_locus_size <- 100
-#' p0 <- 10
-#'
-#' # Modules of traits
-#' #
-#' n_modules <- 5
-#' mean_module_size <- 50
-#'
-#' # Autocorrelation within loci and equicorrelation within trait modules
-#' #
-#' rho_min_x <- rho_min_y <- 0.5
-#' rho_max_x <- rho_max_y <- 0.9
-#'
-#' # Annotations
-#' #
-#' r <- 200
-#' r0 <- 10
-#'
-#' # Association pattern
-#' #
-#' prop_act <- 0.1
-#' max_tot_pve <- 0.5
-#'
-#' list_assoc <- generate_dependence_from_annots(n, n_loci, mean_locus_size, p0,
-#'                                               rho_min_x, rho_max_x,
-#'                                               n_modules, mean_module_size,
-#'                                               rho_min_y, rho_max_y, r, r0,
-#'                                               prop_act, max_tot_pve,
-#'                                               seed = user_seed)
-#'
-#' @export
-#'
+# Epigenome-driven QTL mapping
+#
+# @examples
+# user_seed <- 123; set.seed(user_seed)
+#
+# # Number of samples
+# #
+# n <- 500
+#
+# # Loci
+# #
+# n_loci <- 20
+# mean_locus_size <- 100
+# p0 <- 10
+#
+# # Modules of traits
+# #
+# n_modules <- 5
+# mean_module_size <- 50
+#
+# # Autocorrelation within loci and equicorrelation within trait modules
+# #
+# rho_min_x <- rho_min_y <- 0.5
+# rho_max_x <- rho_max_y <- 0.9
+#
+# # Annotations
+# #
+# r <- 200
+# r0 <- 10
+#
+# # Association pattern
+# #
+# prop_act <- 0.1
+# max_tot_pve <- 0.5
+#
+# list_assoc <- generate_dependence_from_annots(n, n_loci, mean_locus_size, p0,
+#                                               rho_min_x, rho_max_x,
+#                                               n_modules, mean_module_size,
+#                                               rho_min_y, rho_max_y, r, r0,
+#                                               prop_act, max_tot_pve,
+#                                               user_seed = user_seed)
+#
+# @export
+
 generate_dependence_from_annots <- function(n,
                                             n_loci,
                                             mean_locus_size,
@@ -73,7 +73,7 @@ generate_dependence_from_annots <- function(n,
                                             n_cpus = 1,
                                             maxit = 1e4,
                                             module_specific = FALSE,
-                                            seed = NULL) {
+                                            user_seed = NULL) {
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(user_seed)){
