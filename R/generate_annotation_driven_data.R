@@ -1,46 +1,102 @@
-# Epigenome-driven QTL mapping
+# This file is part of the `echoseq` R package:
+#     https://github.com/hruffieux/echoseq
 #
-# @examples
-# user_seed <- 123; set.seed(user_seed)
-#
-# # Number of samples
-# #
-# n <- 500
-#
-# # Loci
-# #
-# n_loci <- 20
-# mean_locus_size <- 100
-# p0 <- 10
-#
-# # Modules of traits
-# #
-# n_modules <- 5
-# mean_module_size <- 50
-#
-# # Autocorrelation within loci and equicorrelation within trait modules
-# #
-# rho_min_x <- rho_min_y <- 0.5
-# rho_max_x <- rho_max_y <- 0.9
-#
-# # Annotations
-# #
-# r <- 200
-# r0 <- 10
-#
-# # Association pattern
-# #
-# prop_act <- 0.1
-# max_tot_pve <- 0.5
-#
-# list_assoc <- generate_dependence_from_annots(n, n_loci, mean_locus_size, p0,
-#                                               rho_min_x, rho_max_x,
-#                                               n_modules, mean_module_size,
-#                                               rho_min_y, rho_max_y, r, r0,
-#                                               prop_act, max_tot_pve,
-#                                               user_seed = user_seed)
-#
-# @export
+#' Generate epigenetic marks, SNPs and phenotypes with epigenome-driven genetic
+#' associations
+#'
+#' @param n Number of observations.
+#' @param n_loci Number of loci.
+#' @param mean_locus_size Mean locus size.
+#' @param p0 Minimum number of active SNPs (i.e., associated with at least one
+#' phenotype).
+#' @param rho_min_x Minimum autocorrelation value for blocks of SNPs in
+#' linkage-disequilibrium.
+#' @param rho_max_x Maximum autocorrelation value for blocks of SNPs in
+#' linkage-disequilibrium.
+#' @param n_modules Number of modules of phenotypes.
+#' @param mean_module_size Mean module size.
+#' @param rho_min_y Minimum equicorrelation value for the phenotypes in a given
+#' module.
+#' @param rho_max_y Minimum equicorrelation value for the phenotypes in a given
+#' module.
+#' @param r Total number of epigenetic annotations.
+#' @param r0 Number of epigenetic annotations which trigger genetic associations.
+#' @param prop_act Proportion of active ......
+#' @param max_tot_pve Maximum variance explained by the SNPs for a given
+#' phenotype.
+#' @param annots_vs_indep Proportion of active SNPs whose effects are triggered
+#' by epigenetic marks. Default is 1, for all effects triggered by the epigenome.
+#' @param min_dist Minimum distance between each locus (in terms of number of
+#' SNPs). Default is 0 for no distance enforced.
+#' @param maf_thres Minor allele frequency threshold. Default is 0.05.
+#' @param max_nb_act_snps_per_locus Maximum number of active SNPs per locus.
+#' Default is 3.
+#' @param vec_q ..... Default is NULL.
+#' @param real_snp_mart Matrix of real SNPs supplied by the user. Default is
+#' NULL for simulated SNPs.
+#' @param real_annot_mat Matrix of real epigenetic annotations supplied by the
+#' user. Default is NULL for simulated annotations.
+#' @param sd_act_beta Standard deviation of the simulated QTL effects.
+#' @param q_pres_annot_loci ..............
+#' @param bin_annot_freq Minimum frequency ...........
+#' @param candidate_modules_annots
+#' @param tpois_lam_act_annots_mm
+#' @param sd_act_prob
+#' @param sd_err
+#' @param rbeta_sh1_rr
+#' @param n_cpus
+#' @param maxit
+#' @param module_specific
+#' @param user_seed Seed set for reproducibility. Default is \code{NULL}, no
+#'   seed set.
+#'
+#' @return A list containing matrices of
+#'  \item{snps}{Matrix containing the simulated or supplied SNP data.}
+#'  \item{annots}{Matrix containing the simulated or supplied epiegenetic
+#'  annotation data.}
+#'  \item{phenos}{Matrix containing the simulated phenotypic data.}
+#'
+#' @examples
+#' user_seed <- 123; set.seed(user_seed)
+#'
+#' # Number of samples
+#' #
+#' n <- 500
+#'
+#' # Loci
+#' #
+#' n_loci <- 20
+#' mean_locus_size <- 100
+#' p0 <- 10
+#'
+#' # Modules of traits
+#' #
+#' n_modules <- 5
+#' mean_module_size <- 50
+#'
+#' # Autocorrelation within loci and equicorrelation within trait modules
+#' #
+#' rho_min_x <- rho_min_y <- 0.5
+#' rho_max_x <- rho_max_y <- 0.9
+#'
+#' # Annotations
+#' #
+#' r <- 200
+#' r0 <- 10
+#'
+#' # Association pattern
+#' #
+#' prop_act <- 0.1
+#' max_tot_pve <- 0.5
+#'
+#' list_assoc <- generate_dependence_from_annots(n, n_loci, mean_locus_size, p0,
+#'                                               rho_min_x, rho_max_x,
+#'                                               n_modules, mean_module_size,
+#'                                               rho_min_y, rho_max_y, r, r0,
+#'                                               prop_act, max_tot_pve,
+#'                                               user_seed = user_seed)
+#'
+#' @export
 
 generate_dependence_from_annots <- function(n,
                                             n_loci,
@@ -139,7 +195,7 @@ generate_dependence_from_annots <- function(n,
     module_specific <- FALSE # for now don't give the option of module-specific activation.
     if (module_specific) {
 
-      tb_act_annots <- set_act_annots_module_specific(ind_r0, n_modules)
+      tb_act_annots <- set_act_annots_module_specific_(ind_r0, n_modules)
 
     } else {
 
@@ -238,7 +294,7 @@ generate_dependence_from_annots <- function(n,
     # can occur when !is.null(real_annot_mat)
 
   list_map <- tryCatch({
-      set_locus_and_module_pattern_from_annots(n,
+      set_locus_and_module_pattern_from_annots_(n,
                                                real_annot_mat,
                                                q_pres_annot_loci,
                                                r,
@@ -277,7 +333,7 @@ generate_dependence_from_annots <- function(n,
   annots <- list_map$V
   snps <- list_map$X
 
-  list_Y <- generate_phenos_from_annots(list_map,
+  list_Y <- generate_phenos_from_annots_(list_map,
                                         prop_act,
                                         sd_act_prob,
                                         sd_act_beta,
@@ -292,7 +348,7 @@ generate_dependence_from_annots <- function(n,
   create_named_list_(snps, annots, phenos)
 }
 
-set_locus_and_module_pattern_from_annots <- function(n, # sample size
+set_locus_and_module_pattern_from_annots_ <- function(n, # sample size
 
                                                      # ANNOTS
                                                      #
@@ -312,7 +368,7 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
                                                      n_loci,                    # number of loci
                                                      mean_locus_size,           # mean locus size (drawn from a Poisson distribution)
                                                      min_dist,                  # minimum number of SNPs separating each pair of loci
-                                                     p0,                        # minimum number of active SNPs (the actual number will also depend on the prop_act argument of the generate_phenos_from_annots function)
+                                                     p0,                        # minimum number of active SNPs (the actual number will also depend on the prop_act argument of the generate_phenos_from_annots_ function)
                                                      max_nb_act_snps_per_locus, # maximum number of active SNPs allowed per locus (typically 4-5?)
                                                      maf_thres,                 # minor allele frequency threshold (applied for both real and simulated SNPs)
 
@@ -460,7 +516,7 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
 
       # build matrix of SNPs
       #
-      X <- generate_snps_from_loci(n,
+      X <- generate_snps_from_loci_(n,
                                    list_loci,
                                    real_snp_mat = real_snp_mat,
                                    maf_thres = maf_thres,
@@ -623,9 +679,9 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
 
   if (is.null(real_annot_mat)) {
 
-    V <- generate_binary_annots(p, r, list_map_annots)
+    V <- generate_binary_annots_(p, r, list_map_annots)
 
-    X <- generate_snps_from_loci(n,
+    X <- generate_snps_from_loci_(n,
                                  list_loci,
                                  real_snp_mat = real_snp_mat,
                                  rho_min = rho_min_x,
@@ -653,7 +709,7 @@ set_locus_and_module_pattern_from_annots <- function(n, # sample size
 
 
 
-set_act_annots_module_specific <- function(ind_r0, n_modules) {
+set_act_annots_module_specific_ <- function(ind_r0, n_modules) {
 
   r0 <- length(ind_r0)
 
@@ -1062,7 +1118,7 @@ choose_act_snps_ <- function(type,                     # flag "annots" or "indep
 
 }
 
-generate_phenos_from_annots <- function(list_map,           # object supplied by the set_locus_and_module_pattern_from_annots function
+generate_phenos_from_annots_ <- function(list_map,           # object supplied by the set_locus_and_module_pattern_from_annots_ function
                                         prop_act,           # approximate proportion of non-zero predictor-response effects
                                         sd_act_prob,        # standard deviation for the effects of hotspot propensities and annots (within probit link - Gaussian effects)
                                         sd_act_beta,        # standard deviation for the regression effects of between predictors and responses (Gaussian effects)
@@ -1338,9 +1394,9 @@ generate_phenos_from_annots <- function(list_map,           # object supplied by
 
 }
 
-generate_binary_annots <- function(p,
+generate_binary_annots_ <- function(p,
                                    r,
-                                   list_map_annots = NULL # object obtained from the set_locus_and_module_pattern_from_annots function, if NULL, annots drawn from noise
+                                   list_map_annots = NULL # object obtained from the set_locus_and_module_pattern_from_annots_ function, if NULL, annots drawn from noise
 ) {
 
   # Each SNP has a given probability of falling in annots
@@ -1389,7 +1445,7 @@ generate_binary_annots <- function(p,
 }
 
 
-generate_snps_from_loci <- function(n,
+generate_snps_from_loci_ <- function(n,
                                     list_loci,
                                     real_snp_mat = NULL,
                                     rho_min = NULL,
