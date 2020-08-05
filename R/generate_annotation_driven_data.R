@@ -6,19 +6,19 @@
 #'
 #' @param n Number of observations.
 #' @param n_loci Number of loci.
-#' @param mean_locus_size Mean locus size.
+#' @param mean_locus_size Mean locus size (drawn from a Poisson distribution).
 #' @param p0 Minimum number of active SNPs (i.e., associated with at least one
 #' phenotype).
 #' @param rho_min_x Minimum autocorrelation value for blocks of SNPs in
-#' linkage-disequilibrium.
+#' linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.
 #' @param rho_max_x Maximum autocorrelation value for blocks of SNPs in
-#' linkage-disequilibrium.
+#' linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.
 #' @param n_modules Number of modules of phenotypes.
-#' @param mean_module_size Mean module size.
+#' @param mean_module_size Mean module size (drawn from a Poisson distribution).
 #' @param rho_min_y Minimum equicorrelation value for the phenotypes in a given
-#' module.
+#' module. If \code{NULL}, independent SNPs simulated.
 #' @param rho_max_y Minimum equicorrelation value for the phenotypes in a given
-#' module.
+#' module. If \code{NULL}, independent SNPs simulated.
 #' @param r Total number of epigenetic annotations.
 #' @param r0 Number of epigenetic annotations which trigger genetic associations.
 #' @param prop_act Proportion of active ......
@@ -26,27 +26,42 @@
 #' phenotype.
 #' @param annots_vs_indep Proportion of active SNPs whose effects are triggered
 #' by epigenetic marks. Default is 1, for all effects triggered by the epigenome.
-#' @param min_dist Minimum distance between each locus (in terms of number of
-#' SNPs). Default is 0 for no distance enforced.
-#' @param maf_thres Minor allele frequency threshold. Default is 0.05.
+#' @param min_dist Minimum distance between each pair of loci (in terms of
+#' number of SNPs). Default is 0 for no distance enforced.
+#' @param maf_thres Minor allele frequency threshold (applied for both supplied
+#' and simulated SNPs). Default is 0.05.
 #' @param max_nb_act_snps_per_locus Maximum number of active SNPs per locus.
 #' Default is 3.
-#' @param vec_q ..... Default is NULL.
-#' @param real_snp_mart Matrix of real SNPs supplied by the user. Default is
-#' NULL for simulated SNPs.
+#' @param vec_q Exact module sizes. Either mean_module_size or vec_q must be
+#' \code{NULL}. Default is \code{NULL}.
+#' @param real_snp_mat Matrix of real SNPs supplied by the user. Default is
+#' \code{NULL} for simulated SNPs under the Hardy-Weinberg assumption.
 #' @param real_annot_mat Matrix of real epigenetic annotations supplied by the
-#' user. Default is NULL for simulated annotations.
-#' @param sd_act_beta Standard deviation of the simulated QTL effects.
-#' @param q_pres_annot_loci ..............
-#' @param bin_annot_freq Minimum frequency ...........
-#' @param candidate_modules_annots
-#' @param tpois_lam_act_annots_mm
-#' @param sd_act_prob
-#' @param sd_err
-#' @param rbeta_sh1_rr
-#' @param n_cpus
-#' @param maxit
-#' @param module_specific
+#' user. Default is \code{NULL} for simulated binary annotations.
+#' @param sd_act_beta Standard deviation of the simulated QTL effects. Either
+#' sd_act_beta or max_tot_pve must be \code{NULL}. Default is \code{NULL}.
+#' @param q_pres_annot_loci Quantile for selecting annotations which concern
+#' most loci (i.e., at least one SNP in each locus). Should be large so enough
+#' candidate active SNPs are available when annots_vs_indep is large. Default is
+#' \code{NULL}.
+#' @param bin_annot_freq Minimum frequency of SNPs concerned by a given
+#' annotation. Default is 0.05.
+#' @param candidate_modules_annots The subset of module ids where all
+#' associations are triggered by annotations. The complement are the modules
+#' where associations are independent of the annotations. Default is \code{NULL}.
+#' @param tpois_lam_act_annots_mm Zero-truncated Poisson parameter for drawing
+#' the number of active annots per module. Default is 1.
+#' @param sd_act_prob Standard deviation for the effects of SNPs and annotations.
+#'  Default is 1.
+#' @param sd_err Response error standard deviation. Default is 1.
+#' @param rbeta_sh1_rr  Beta distribution shape2 parameter for the proportion of
+#' responses associated with an active SNP (in a given module) rbeta_sh2_rr = 1
+#' (default), so right skewed if rbeta_sh1_rr > 1.
+#' @param n_cpus number of CPUs to be used. Default is 1.
+#' @param maxit Maximum number of iterations for the repeat loops. Default is
+#' 1e4.
+#' @param module_specific Boolean specifying whether the epigenome activation is
+#' module-specific or not. Default is \code{FALSE}
 #' @param user_seed Seed set for reproducibility. Default is \code{NULL}, no
 #'   seed set.
 #'
@@ -143,6 +158,7 @@ generate_dependence_from_annots <- function(n,
   check_natural_(n)
   check_natural_(n_loci)
   check_natural_(p0)
+  check_natural_(r0)
   check_natural_(max_nb_act_snps_per_locus)
   check_natural_(n_modules)
   check_natural_(min_dist, zero_ok = TRUE)
@@ -192,7 +208,7 @@ generate_dependence_from_annots <- function(n,
 
     ind_r0 <- sort(sample(1:r, r0)) # Indices of active annots. Must be null if real_annots_mat non-NULL, and must be NULL if r0 non-NULL and vice-versa.
 
-    module_specific <- FALSE # for now don't give the option of module-specific activation.
+    # module_specific <- FALSE # for now don't give the option of module-specific activation.
     if (module_specific) {
 
       tb_act_annots <- set_act_annots_module_specific_(ind_r0, n_modules)

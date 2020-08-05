@@ -46,26 +46,26 @@ generate_dependence_from_annots(
 
 \item{n_loci}{Number of loci.}
 
-\item{mean_locus_size}{Mean locus size.}
+\item{mean_locus_size}{Mean locus size (drawn from a Poisson distribution).}
 
 \item{p0}{Minimum number of active SNPs (i.e., associated with at least one
 phenotype).}
 
 \item{rho_min_x}{Minimum autocorrelation value for blocks of SNPs in
-linkage-disequilibrium.}
+linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.}
 
 \item{rho_max_x}{Maximum autocorrelation value for blocks of SNPs in
-linkage-disequilibrium.}
+linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.}
 
 \item{n_modules}{Number of modules of phenotypes.}
 
-\item{mean_module_size}{Mean module size.}
+\item{mean_module_size}{Mean module size (drawn from a Poisson distribution).}
 
 \item{rho_min_y}{Minimum equicorrelation value for the phenotypes in a given
-module.}
+module. If \code{NULL}, independent SNPs simulated.}
 
 \item{rho_max_y}{Minimum equicorrelation value for the phenotypes in a given
-module.}
+module. If \code{NULL}, independent SNPs simulated.}
 
 \item{r}{Total number of epigenetic annotations.}
 
@@ -79,30 +79,61 @@ phenotype.}
 \item{annots_vs_indep}{Proportion of active SNPs whose effects are triggered
 by epigenetic marks. Default is 1, for all effects triggered by the epigenome.}
 
-\item{min_dist}{Minimum distance between each locus (in terms of number of
-SNPs). Default is 0 for no distance enforced.}
+\item{min_dist}{Minimum distance between each pair of loci (in terms of
+number of SNPs). Default is 0 for no distance enforced.}
 
-\item{maf_thres}{Minor allele frequency threshold. Default is 0.05.}
+\item{maf_thres}{Minor allele frequency threshold (applied for both supplied
+and simulated SNPs). Default is 0.05.}
 
 \item{max_nb_act_snps_per_locus}{Maximum number of active SNPs per locus.
 Default is 3.}
 
-\item{vec_q}{..... Default is NULL.}
+\item{vec_q}{Exact module sizes. Either mean_module_size or vec_q must be
+\code{NULL}. Default is \code{NULL}.}
+
+\item{real_snp_mat}{Matrix of real SNPs supplied by the user. Default is
+\code{NULL} for simulated SNPs under the Hardy-Weinberg assumption.}
 
 \item{real_annot_mat}{Matrix of real epigenetic annotations supplied by the
-user. Default is NULL for simulated annotations.}
+user. Default is \code{NULL} for simulated binary annotations.}
 
-\item{sd_act_beta}{Standard deviation of the simulated QTL effects.}
+\item{sd_act_beta}{Standard deviation of the simulated QTL effects. Either
+sd_act_beta or max_tot_pve must be \code{NULL}. Default is \code{NULL}.}
 
-\item{q_pres_annot_loci}{..............}
+\item{q_pres_annot_loci}{Quantile for selecting annotations which concern
+most loci (i.e., at least one SNP in each locus). Should be large so enough
+candidate active SNPs are available when annots_vs_indep is large. Default is
+\code{NULL}.}
 
-\item{bin_annot_freq}{Minimum frequency ...........}
+\item{bin_annot_freq}{Minimum frequency of SNPs concerned by a given
+annotation. Default is 0.05.}
+
+\item{candidate_modules_annots}{The subset of module ids where all
+associations are triggered by annotations. The complement are the modules
+where associations are independent of the annotations. Default is \code{NULL}.}
+
+\item{tpois_lam_act_annots_mm}{Zero-truncated Poisson parameter for drawing
+the number of active annots per module. Default is 1.}
+
+\item{sd_act_prob}{Standard deviation for the effects of SNPs and annotations.
+Default is 1.}
+
+\item{sd_err}{Response error standard deviation. Default is 1.}
+
+\item{rbeta_sh1_rr}{Beta distribution shape2 parameter for the proportion of
+responses associated with an active SNP (in a given module) rbeta_sh2_rr = 1
+(default), so right skewed if rbeta_sh1_rr > 1.}
+
+\item{n_cpus}{number of CPUs to be used. Default is 1.}
+
+\item{maxit}{Maximum number of iterations for the repeat loops. Default is
+1e4.}
+
+\item{module_specific}{Boolean specifying whether the epigenome activation is
+module-specific or not. Default is \code{FALSE}}
 
 \item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
 seed set.}
-
-\item{real_snp_mart}{Matrix of real SNPs supplied by the user. Default is
-NULL for simulated SNPs.}
 }
 \value{
 A list containing matrices of
