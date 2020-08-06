@@ -31,6 +31,9 @@ check_positive_ <- function(x, eps = .Machine$double.eps^0.75){
 }
 
 check_zero_one_ <- function(x){
+
+  stopifnot(!is.null(x))
+
   if (any(x < 0) | any(x > 1)) {
     err_mess <- paste(deparse(substitute(x)), " must lie between 0 and 1.", sep="")
     if (length(x) > 1) err_mess <- paste("All entries of ", err_mess, sep="")

@@ -10,9 +10,9 @@
 #' @param p0 Minimum number of active SNPs (i.e., associated with at least one
 #' phenotype).
 #' @param rho_min_x Minimum autocorrelation value for blocks of SNPs in
-#' linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.
+#' linkage-disequilibrium.
 #' @param rho_max_x Maximum autocorrelation value for blocks of SNPs in
-#' linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.
+#' linkage-disequilibrium.
 #' @param n_modules Number of modules of phenotypes.
 #' @param mean_module_size Mean module size (drawn from a Poisson distribution).
 #' @param rho_min_y Minimum equicorrelation value for the phenotypes in a given
@@ -48,7 +48,9 @@
 #' annotation. Default is 0.05.
 #' @param candidate_modules_annots The subset of module ids where all
 #' associations are triggered by annotations. The complement are the modules
-#' where associations are independent of the annotations. Default is \code{NULL}.
+#' where associations are independent of the annotations. Default is \code{NULL}
+#' for all modules used as active modules. If \code{n_modules} is large, specify
+#' a smaller subset of modules, as the mapping may fail otherwise.
 #' @param tpois_lam_act_annots_mm Zero-truncated Poisson parameter for drawing
 #' the number of active annots per module. Default is 1.
 #' @param sd_act_prob Standard deviation for the effects of SNPs and annotations.
@@ -146,6 +148,7 @@ generate_dependence_from_annots <- function(n,
                                             module_specific = FALSE,
                                             user_seed = NULL) {
 
+
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(user_seed)){
     RNGkind("L'Ecuyer-CMRG") # ensure reproducibility when using mclapply
@@ -175,12 +178,17 @@ generate_dependence_from_annots <- function(n,
     check_positive_(tpois_lam_act_annots_mm)
   }
 
-
   check_structure_(real_annot_mat, "matrix", "numeric", null_ok = TRUE, na_ok = TRUE)
   check_structure_(real_snp_mat, "matrix", "numeric", null_ok = TRUE)
 
   if (is.null(candidate_modules_annots)) { # means: all modules considered.
     candidate_modules_annots <- 1:n_modules
+    if (n_modules > 5) {
+      warning(paste0("n_modules is large and the mapping may fail if ",
+                     "candidate_modules_annots is NULL. If so, please specify ",
+                     "a smaller subset of active modules using ",
+                     "candidate_modules_annots."))
+    }
   }
 
   stopifnot(candidate_modules_annots %in% 1:n_modules)
@@ -225,6 +233,7 @@ generate_dependence_from_annots <- function(n,
     r0_list_map <- NULL
 
   }
+
 
   check_natural_(min_dist,zero_ok = TRUE) # we should have an assertion for checking that sufficient number of SNPs to enforce this distance.
 
