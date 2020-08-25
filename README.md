@@ -26,7 +26,7 @@ report issues.
 To install, run the following commands in R:
 
 ``` r
-# install.packages("devtools")
+if(!require(devtools)) install.packages("devtools")
 devtools::install_github("hruffieux/echoseq", ref = "devel")
 ```
 
