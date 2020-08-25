@@ -12,7 +12,7 @@ or can replicate real datasets supplied by the user. Datasets simulated using
 privacy reasons. The data generation schemes are based on generally accepted 
 principles of population genetics (Hardy–Weinberg equilibrium, 
 linkage-disequilibrium, natural selection, pleiotropic control, sparsity 
-assumptions, etc).
+assumptions, epigenetic control, etc).
 
 
 ## Warning
