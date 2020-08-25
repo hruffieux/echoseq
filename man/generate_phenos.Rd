@@ -4,8 +4,15 @@
 \alias{generate_phenos}
 \title{Generate phenotypic data with prespecified block-wise correlation structure.}
 \usage{
-generate_phenos(n, d, var_err = 1, cor_type = NULL, vec_rho = NULL,
-  n_cpus = 1, user_seed = NULL)
+generate_phenos(
+  n,
+  d,
+  var_err = 1,
+  cor_type = NULL,
+  vec_rho = NULL,
+  n_cpus = 1,
+  user_seed = NULL
+)
 }
 \arguments{
 \item{n}{Number of observations.}

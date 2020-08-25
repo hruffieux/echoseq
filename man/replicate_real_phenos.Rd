@@ -4,8 +4,15 @@
 \alias{replicate_real_phenos}
 \title{Generate phenotypes emulating real phenotypic data at hand.}
 \usage{
-replicate_real_phenos(n, real_phenos, input_family = "gaussian",
-  bl_lgth = NULL, d = NULL, n_cpus = 1, user_seed = NULL)
+replicate_real_phenos(
+  n,
+  real_phenos,
+  input_family = "gaussian",
+  bl_lgth = NULL,
+  d = NULL,
+  n_cpus = 1,
+  user_seed = NULL
+)
 }
 \arguments{
 \item{n}{Number of observations.}

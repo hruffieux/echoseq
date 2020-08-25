@@ -2,13 +2,11 @@ Package: echoseq
 Type: Package
 Title: Replication and simulation of genetic variants, molecular expression
     levels and other phenotypic data
-Version: 0.2.4
-Date: 2020-01-23
+Version: 0.3.0
+Date: 2020-08-25
 Authors@R: c(
-    person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
-            role = c("aut", "cre")),
-    person(given = "Nestle Institute of Health Sciences SA, Lausanne, Switzerland",
-            role = "cph"))
+    person("Helene", "Ruffieux", email = "helene.ruffieux@mrc-bsu.cam.ac.uk",
+            role = c("aut", "cre")))
 Description: This package provides functions to emulate molecular quantitative
     trait locus data and clinical data associated with genetic variants under
     user-specified association patterns. The data can be the result of pure
@@ -16,16 +14,19 @@ Description: This package provides functions to emulate molecular quantitative
     replace real data when these cannot be shared for diverse privacy reasons).
     The data generation schemes are based on generally accepted principles of
     population genetics (Hardy--Weinberg equilibrium, linkage-disequilibrium,
-    natural selection, pleiotropic control, sparsity assumptions). Details in
-    H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient inference for
-    genetic association studies with multiple outcomes, *Biostatistics*, 2017.
+    natural selection, pleiotropic control, sparsity assumptions, epigenetic
+    control, etc.). 
 Depends:
     R (>= 3.2.0)
-License: GPL (>= 2) | file LICENSE
+License: GPL (>= 3) | file LICENSE
 LazyData: TRUE
 Imports:
+    dplyr (>= 0.8.4),
+    extraDistr (>= 1.8.11),
     Matrix (>= 1.2-2),
     parallel,
-    plyr (>= 1.8.4)
-RoxygenNote: 6.1.1
+    plyr (>= 1.8.4),
+    rlang (>= 0.4.5)
+RoxygenNote: 7.0.2
 Suggests: testthat
+Encoding: UTF-8

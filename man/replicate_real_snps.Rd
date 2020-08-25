@@ -4,8 +4,15 @@
 \alias{replicate_real_snps}
 \title{Generate SNPs emulating real SNP data at hand.}
 \usage{
-replicate_real_snps(n, real_snps, bl_lgth, p = NULL, maf_thres = NULL,
-  n_cpus = 1, user_seed = NULL)
+replicate_real_snps(
+  n,
+  real_snps,
+  bl_lgth,
+  p = NULL,
+  maf_thres = NULL,
+  n_cpus = 1,
+  user_seed = NULL
+)
 }
 \arguments{
 \item{n}{Number of observations.}

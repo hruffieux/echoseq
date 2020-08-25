@@ -4,13 +4,23 @@
 
 # Diverse utility functions implementing sanity checks and basic operations.
 #
+check_natural_ <- function(x, zero_ok = FALSE, eps = .Machine$double.eps^0.75){
 
-check_natural_ <- function(x, eps = .Machine$double.eps^0.75){
-  if (any(x < eps | abs(x - round(x)) > eps)) {
-    stop(paste(deparse(substitute(x)),
-               " must be natural.", sep=""))
+  stopifnot(!is.null(x))
+
+  fac <- ifelse(zero_ok, -1, 1)
+
+  if (any(x < fac * eps | abs(x - round(x)) > eps)) {
+    stop(paste0(deparse(substitute(x)),
+                " must be natural."))
   }
 }
+
+
+check_binary_ <-function(x) {
+  identical(as.vector(x), as.numeric(as.logical(x)))
+}
+
 
 check_positive_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps)) {
@@ -21,6 +31,9 @@ check_positive_ <- function(x, eps = .Machine$double.eps^0.75){
 }
 
 check_zero_one_ <- function(x){
+
+  stopifnot(!is.null(x))
+
   if (any(x < 0) | any(x > 1)) {
     err_mess <- paste(deparse(substitute(x)), " must lie between 0 and 1.", sep="")
     if (length(x) > 1) err_mess <- paste("All entries of ", err_mess, sep="")
@@ -110,4 +123,83 @@ cbind_fill_matrix <- function(...) {
   tr <- lapply(..., as.matrix)
   tr <- lapply(..., t)
   t(as.matrix(plyr::rbind.fill.matrix(tr)))
+}
+
+
+set_blocks_ <- function(tot, pos_bl, n_cpus, verbose = TRUE) {
+
+  check_structure_(n_cpus, "vector", "numeric", 1)
+  check_natural_(n_cpus)
+
+  check_structure_(verbose, "vector", "logical", 1)
+
+  list_blocks <- lapply(seq_along(tot), function(ii) {
+
+    tt <- tot[ii]
+
+    if (is.list(pos_bl)) {
+      pb <- pos_bl[[ii]]
+    } else {
+      pb <- pos_bl
+    }
+
+    check_structure_(tt, "vector", "numeric", 1)
+    check_natural_(tt)
+
+    check_structure_(pb, "vector", "numeric")
+    check_natural_(pb)
+
+    if (any(pb < 1) | any(pb > tt))
+      stop("The positions provided in pos_bl must range between 1 and total number of variables given in tot.")
+
+    if (any(duplicated(pb)))
+      stop("The positions provided in pos_bl must be unique.")
+
+    if (any(pb != cummax(pb)))
+      stop("The positions provided in pos_bl must be monotonically increasing.")
+
+    vec_fac_bl <- as.factor(cumsum(seq_along(1:tt) %in% pb))
+
+    n_bl <- length(unique(vec_fac_bl))
+
+    n_var_blocks <- tt
+
+    create_named_list_(n_var_blocks, n_bl, vec_fac_bl)
+
+  })
+
+  if (length(list_blocks) > 1 && list_blocks[[2]]$n_bl != 1) {
+    names(list_blocks) <- c("bl_x", "bl_y")
+    tot_n_bl <- list_blocks$bl_x$n_bl * list_blocks$bl_y$n_bl
+  } else {
+    list_blocks <- list_blocks[[1]]
+    tot_n_bl <- list_blocks$n_bl
+  }
+
+  if (n_cpus > 1) {
+
+    n_cpus_avail <- parallel::detectCores()
+    if (n_cpus > n_cpus_avail) {
+      n_cpus <- n_cpus_avail
+      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead.",
+                    sep=""))
+    }
+
+    if (n_cpus > tot_n_bl){
+      message <- paste("The number of cpus in use is at most equal to the number of blocks.",
+                       "n_cpus is therefore set to ", tot_n_bl, ". \n", sep ="")
+      if(verbose) cat(message)
+      else warning(message)
+      n_cpus <- tot_n_bl
+    }
+
+
+  }
+
+  list_blocks$n_cpus <- n_cpus
+
+  class(list_blocks) <- "blocks"
+
+  list_blocks
 }
