@@ -52,10 +52,10 @@ generate_dependence_from_annots(
 phenotype).}
 
 \item{rho_min_x}{Minimum autocorrelation value for blocks of SNPs in
-linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.}
+linkage-disequilibrium.}
 
 \item{rho_max_x}{Maximum autocorrelation value for blocks of SNPs in
-linkage-disequilibrium. If \code{NULL}, independent SNPs simulated.}
+linkage-disequilibrium.}
 
 \item{n_modules}{Number of modules of phenotypes.}
 
@@ -110,7 +110,9 @@ annotation. Default is 0.05.}
 
 \item{candidate_modules_annots}{The subset of module ids where all
 associations are triggered by annotations. The complement are the modules
-where associations are independent of the annotations. Default is \code{NULL}.}
+where associations are independent of the annotations. Default is \code{NULL}
+for all modules used as active modules. If \code{n_modules} is large, specify
+a smaller subset of modules, as the mapping may fail otherwise.}
 
 \item{tpois_lam_act_annots_mm}{Zero-truncated Poisson parameter for drawing
 the number of active annots per module. Default is 1.}

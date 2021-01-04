@@ -86,18 +86,18 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0, pat,
   if (any(bool_cst)) { ### PROB VECTOR NEEDED? OR USE CUTOFF ZERO? ### centered logistic?
 
     if (sum(bool_cst) < 50) {
-      message <- paste("SNP(s) with id ", paste(ind_p0, collapse = " "),
-                       " constant. Effect(s) on the phenotypes removed.\n", sep = "")
+      message <- paste0("SNP(s) with id ", paste0(ind_p0, collapse = " "),
+                       " constant. Effect(s) on the phenotypes removed.\n")
 
       if (all(bool_cst))
-        stop(paste(message, "No remaining ``active'' SNP, please change ind_p0 ",
-                   "(now empty).\n", sep = ""))
+        stop(paste0(message, "No remaining ``active'' SNP, please change ind_p0 ",
+                   "(now empty).\n"))
     } else {
-      message <- paste(sum(bool_cst), " SNPs constant. Effects on the phenotypes ",
-                       "removed.\n", sep = "")
+      message <- paste0(sum(bool_cst), " SNPs constant. Effects on the phenotypes ",
+                       "removed.\n")
       if (all(bool_cst))
-        stop(paste(message, "No remaining ``active'' SNP, please change ",
-                   "ind_p0 (now empty).\n", sep = ""))
+        stop(paste0(message, "No remaining ``active'' SNP, please change ",
+                   "ind_p0 (now empty).\n"))
     }
 
     warning(message)
@@ -111,19 +111,19 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0, pat,
   if (any(bool_cst)) {
 
     if (sum(bool_cst) < 50) {
-      message <- paste("Phenotype(s) with id ", paste(ind_d0, collapse = " "),
-                       " constant. Association(s) with the SNPs removed.\n", sep = "")
+      message <- paste0("Phenotype(s) with id ", paste0(ind_d0, collapse = " "),
+                       " constant. Association(s) with the SNPs removed.\n")
 
       if (all(bool_cst))
-        stop(paste(message, "No remaining ``active'' phenotype, please change ",
-                   "ind_d0 (now empty).\n", sep = ""))
+        stop(paste0(message, "No remaining ``active'' phenotype, please change ",
+                   "ind_d0 (now empty).\n"))
     } else {
-      message <- paste(sum(bool_cst), " phenotype(s) constant. Association(s) ",
-                       "with the SNPs removed.\n", sep = "")
+      message <- paste0(sum(bool_cst), " phenotype(s) constant. Association(s) ",
+                       "with the SNPs removed.\n")
 
       if (all(bool_cst))
-        stop(paste(message, "No remaining ``active'' phenotype, please change ",
-                   "ind_d0 (now empty).\n", sep = ""))
+        stop(paste0(message, "No remaining ``active'' phenotype, please change ",
+                   "ind_d0 (now empty).\n"))
     }
 
     warning(message)
@@ -153,10 +153,10 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0, pat,
     check_zero_one_(pve_per_snp)
 
     if (max_per_resp * pve_per_snp > 1 - eps)
-      stop(paste("Provided average proportion of variance explained per SNP too ",
+      stop(paste0("Provided average proportion of variance explained per SNP too ",
                  "high, would lead to a total genetic variance explained above ",
                  "100% for at least one response. \n Setting pve_per_snp < 1 / length(ind_p0) ",
-                 "will work for any pattern. \n", sep = ""))
+                 "will work for any pattern. \n"))
   }
 
   beta <- matrix(0.0, nrow = p, ncol = d)
@@ -248,13 +248,14 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0, pat,
 #' model, and the phenotypic variance explained by the SNPs is with respect to
 #' the latent Gaussian variables involved in the probit model.
 #'
-#' @param list_snps An object of class "sim_snps" containing simulated SNP data
-#'   and their corresponding sample minor allele frequencies. It must be
-#'   obtained from the function \code{\link{generate_snps}} or
-#'   \code{\link{replicate_real_snps}}.
-#' @param list_phenos An object of class "sim_pheno" containing simulated
-#'   phenotypic data, their sample variance and block structure information.
-#'   It must be obtained from the function \code{\link{generate_phenos}} or
+#' @param list_snps An object of class "list_snps" or "sim_snps" containing
+#'   SNPs and their corresponding sample minor allele frequencies. It must be
+#'   obtained from the function \code{\link{convert_snps}},
+#'   \code{\link{generate_snps}} or \code{\link{replicate_real_snps}}.
+#' @param list_phenos An object of class "list_phenos" or "sim_phenos"
+#'   containing phenotypic data variables, their sample variance and block
+#'   structure information. It must be obtained from the function
+#'   \code{\link{convert_phenos}}, \code{\link{generate_phenos}} or
 #'   \code{\link{replicate_real_phenos}}.
 #' @param ind_d0 A vector of indices specifying the position of the "active"
 #'   phenotypes (i.e., which will be associated with at least one SNP). Must
@@ -305,7 +306,8 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0, pat,
 #'  \item{pve_per_snp}{Average proportion of phenotypic variance explained by
 #'                     each active SNP (for an active phenotype).}
 #'
-#' @seealso \code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
+#' @seealso \code{\link{convert_snps}}, \code{\link{generate_snps}},
+#'   \code{\link{replicate_real_snps}}, \code{\link{convert_phenos}},
 #'   \code{\link{generate_phenos}}, \code{\link{replicate_real_phenos}}
 #'
 #'
@@ -349,25 +351,27 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
     stop("Either pve_per_snp or max_tot_pve must be NULL.")
 
   if (is.null(pve_per_snp) & is.null(max_tot_pve))
-    warning(paste("As both pve_per_snp or max_tot_pve were provided as NULL, the ",
+    warning(paste0("As both pve_per_snp or max_tot_pve were provided as NULL, the ",
                   "pve per SNP was set to its maximum value so that the total ",
-                  "pve for the responses are all below 1.", sep = ""))
+                  "pve for the responses are all below 1."))
 
-  if (!inherits(list_snps, "sim_snps"))
-    stop(paste("The provided list_snps must be an object of class ``sim_snps''. \n",
-               "*** You must either use the function generate_snps to simulate snps ",
+  if (!inherits(list_snps, "list_snps") & !inherits(list_snps, "sim_snps"))
+    stop(paste0("The provided list_snps must be an object of class ``list_snps'' ",
+               "or ``sim_snps''. \n",
+               "*** You must either use the function convert_snps to obtain a ",
+               "list_snps object, the function generate_snps to simulate snps ",
                "under Hardy-Weinberg equilibrium or the function replicate_real_snps ",
                "to simulate SNPs from real SNP data, by replicating their minor ",
-               "allele frequencies and linkage disequilibrium structure. ***",
-               sep=""))
+               "allele frequencies and linkage disequilibrium structure. ***"))
 
-  if (!inherits(list_phenos, "sim_phenos"))
-    stop(paste("The provided list_phenos must be an object of class ``sim_phenos''. \n",
-               "*** You must either use the function generate_phenos to simulate ",
+  if (!inherits(list_phenos, "list_phenos") & !inherits(list_phenos, "sim_phenos"))
+    stop(paste0("The provided list_phenos must be an object of class ```list_phenos'' ",
+               "or `sim_phenos''. \n",
+               "*** You must either use the function convert_phenos to obtain a ",
+               "list_phenos object, the function generate_phenos to simulate ",
                "phenotypes from (possibly correlated) Gaussian variables or the ",
                "function replicate_real_phenos to simulate phenotypes from real ",
-               "phenotypic data, by replicating their correlation structure. ***",
-               sep=""))
+               "phenotypic data, by replicating their correlation structure. ***"))
 
   if (!is.null(pve_per_snp) & !is.null(max_tot_pve))
     stop("Either pve_per_snp or max_tot_pve must be NULL.")

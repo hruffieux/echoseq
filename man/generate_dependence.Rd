@@ -19,14 +19,15 @@ generate_dependence(
 )
 }
 \arguments{
-\item{list_snps}{An object of class "sim_snps" containing simulated SNP data
-and their corresponding sample minor allele frequencies. It must be
-obtained from the function \code{\link{generate_snps}} or
-\code{\link{replicate_real_snps}}.}
+\item{list_snps}{An object of class "list_snps" or "sim_snps" containing
+SNPs and their corresponding sample minor allele frequencies. It must be
+obtained from the function \code{\link{convert_snps}},
+\code{\link{generate_snps}} or \code{\link{replicate_real_snps}}.}
 
-\item{list_phenos}{An object of class "sim_pheno" containing simulated
-phenotypic data, their sample variance and block structure information.
-It must be obtained from the function \code{\link{generate_phenos}} or
+\item{list_phenos}{An object of class "list_phenos" or "sim_phenos"
+containing phenotypic data variables, their sample variance and block
+structure information. It must be obtained from the function
+\code{\link{convert_phenos}}, \code{\link{generate_phenos}} or
 \code{\link{replicate_real_phenos}}.}
 
 \item{ind_d0}{A vector of indices specifying the position of the "active"
@@ -150,6 +151,7 @@ dat_b <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
 
 }
 \seealso{
-\code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
+\code{\link{convert_snps}}, \code{\link{generate_snps}},
+  \code{\link{replicate_real_snps}}, \code{\link{convert_phenos}},
   \code{\link{generate_phenos}}, \code{\link{replicate_real_phenos}}
 }

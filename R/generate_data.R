@@ -34,7 +34,8 @@
 #' list_snps <- generate_snps(n, p, cor_type, vec_rho, n_cpus = 2,
 #'                            user_seed = user_seed)
 #'
-#' @seealso \code{\link{replicate_real_snps}}, \code{\link{generate_phenos}},
+#' @seealso \code{\link{convert_snps}}, \code{\link{replicate_real_snps}},
+#'   \code{\link{convert_phenos}}, \code{\link{generate_phenos}},
 #'   \code{\link{replicate_real_phenos}}, \code{\link{generate_dependence}}
 #'
 #' @export
@@ -78,9 +79,9 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
     else check_zero_one_(abs(vec_rho))
 
     if(length(vec_rho) > p)
-      stop(paste("Provided number of blocks of correlated SNPs, length(vec_rho), ",
+      stop(paste0("Provided number of blocks of correlated SNPs, length(vec_rho), ",
                  "must be smaller than the number of SNPs, p: ",
-                 length(vec_rho), " > ", p, sep = ""))
+                 length(vec_rho), " > ", p))
 
     check_structure_(n_cpus, "vector", "numeric", 1)
     check_natural_(n_cpus)
@@ -89,8 +90,8 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
       n_cpus_avail <- parallel::detectCores()
       if (n_cpus > n_cpus_avail) {
         n_cpus <- n_cpus_avail
-        warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                      "available on the machine. The latter has been used instead.", sep=""))
+        warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                      "available on the machine. The latter has been used instead."))
       }
     }
 
@@ -136,8 +137,8 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
   snps <- as.matrix(snps)
   if (n == 1) snps <- t(snps)
 
-  rownames(snps) <- paste("ind_", 1:n, sep = "")
-  colnames(snps) <- paste("snp_", 1:p, sep = "")
+  rownames(snps) <- paste0("ind_", 1:n)
+  colnames(snps) <- paste0("snp_", 1:p)
 
   vec_maf <- apply(snps, 2, mean) / 2 # empirical maf
   names(vec_maf) <- colnames(snps)
@@ -191,7 +192,8 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
 #' list_phenos <- generate_phenos(n, d, cor_type = cor_type, vec_rho = vec_rho,
 #'                                n_cpus = 2, user_seed = user_seed)
 #'
-#' @seealso \code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
+#' @seealso \code{\link{convert_snps}}, \code{\link{generate_snps}},
+#'   \code{\link{replicate_real_snps}}, \code{\link{convert_phenos}},
 #'   \code{\link{replicate_real_phenos}}, \code{\link{generate_dependence}}
 #'
 #' @export
@@ -237,17 +239,17 @@ generate_phenos <- function(n, d, var_err = 1, cor_type = NULL, vec_rho = NULL,
     else check_zero_one_(abs(vec_rho))
 
     if(length(vec_rho) > d)
-      stop(paste("Provided number of blocks of correlated phenotypes, length(vec_rho), ",
+      stop(paste0("Provided number of blocks of correlated phenotypes, length(vec_rho), ",
                  "must be smaller than the number of phenotypes, d: ",
-                 length(vec_rho), " > ", d, sep = ""))
+                 length(vec_rho), " > ", d))
 
 
     if (n_cpus > 1) {
       n_cpus_avail <- parallel::detectCores()
       if (n_cpus > n_cpus_avail) {
         n_cpus <- n_cpus_avail
-        warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                      "available on the machine. The latter has been used instead.", sep=""))
+        warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                      "available on the machine. The latter has been used instead."))
       }
     }
 
@@ -284,8 +286,8 @@ generate_phenos <- function(n, d, var_err = 1, cor_type = NULL, vec_rho = NULL,
   phenos <- as.matrix(phenos)
   if (n == 1) phenos <- t(phenos)
 
-  rownames(phenos) <- paste("ind_", 1:n, sep = "")
-  colnames(phenos) <- paste("pheno_", 1:d, sep = "")
+  rownames(phenos) <- paste0("ind_", 1:n)
+  colnames(phenos) <- paste0("pheno_", 1:d)
 
   var_err <- apply(phenos, 2, var) # empirical error variance
   names(var_err) <- colnames(phenos)

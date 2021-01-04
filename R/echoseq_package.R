@@ -10,8 +10,8 @@
 #' population genetics (Hardy--Weinberg equilibrium, linkage-disequilibrium,
 #' natural selection, pleiotropic control, sparsity assumptions).
 #'
-#' @section echoseq functions: generate_dependence, generate_phenos,
-#' generate_snps, replicate_real_phenos, replicate_real_snps.
+#' @section echoseq functions: convert_snps, convert_phenos, generate_dependence,
+#' generate_phenos, generate_snps, replicate_real_phenos, replicate_real_snps.
 #'
 #' @docType package
 #' @name echoseq-package

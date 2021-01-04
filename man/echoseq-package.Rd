@@ -16,7 +16,7 @@ population genetics (Hardy--Weinberg equilibrium, linkage-disequilibrium,
 natural selection, pleiotropic control, sparsity assumptions).
 }
 \section{echoseq functions}{
- generate_dependence, generate_phenos,
-generate_snps, replicate_real_phenos, replicate_real_snps.
+ convert_snps, convert_phenos, generate_dependence,
+generate_phenos, generate_snps, replicate_real_phenos, replicate_real_snps.
 }
 
