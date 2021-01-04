@@ -2,8 +2,8 @@ Package: echoseq
 Type: Package
 Title: Replication and simulation of genetic variants, molecular expression
     levels and other phenotypic data
-Version: 0.3.0
-Date: 2020-08-25
+Version: 0.3.1
+Date: 2021-01-04
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@mrc-bsu.cam.ac.uk",
             role = c("aut", "cre")))
@@ -27,6 +27,6 @@ Imports:
     parallel,
     plyr (>= 1.8.4),
     rlang (>= 0.4.5)
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.1
 Suggests: testthat
 Encoding: UTF-8

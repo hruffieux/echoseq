@@ -37,7 +37,8 @@
 #' list_snps <- replicate_real_snps(n, list_fake_real_snps$snps, bl_lgth = 100,
 #'                                  n_cpus = 2, user_seed = user_seed)
 #'
-#' @seealso \code{\link{generate_snps}}, \code{\link{generate_phenos}},
+#' @seealso \code{\link{convert_snps}}, \code{\link{generate_snps}},
+#'   \code{\link{convert_phenos}}, \code{\link{generate_phenos}},
 #'   \code{\link{replicate_real_phenos}}, \code{\link{generate_dependence}}
 #'
 #' @export
@@ -64,8 +65,8 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
     n_cpus_avail <- parallel::detectCores()
     if (n_cpus > n_cpus_avail) {
       n_cpus <- n_cpus_avail
-      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                    "available on the machine. The latter has been used instead.", sep=""))
+      warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead."))
     }
   }
 
@@ -79,8 +80,8 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
   if (!is.null(p)) {
     p_av <- ncol(real_snps)
     if(p > p_av)
-      stop(paste("Provided n greater than number of snps available: ",
-                 p, " > ", p_av, sep = ""))
+      stop(paste0("Provided n greater than number of snps available: ",
+                 p, " > ", p_av))
     real_snps <- real_snps[, 1:p]
   } else {
     p <- ncol(real_snps)
@@ -91,8 +92,8 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
 
   if (bl_lgth == 1) stop("Provided block length must be larger than 1")
   if (bl_lgth > p)
-    stop(paste("Provided block length must be smaller than the number of SNPs available: ",
-               bl_lgth, " > ", p, sep = ""))
+    stop(paste0("Provided block length must be smaller than the number of SNPs available: ",
+               bl_lgth, " > ", p))
 
   vec_real_maf <- apply(real_snps, 2, mean) / 2
 
@@ -123,8 +124,8 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
 
   snps <- cbind_fill_matrix(snps)
 
-  rownames(snps) <- paste("ind_", 1:n, sep = "")
-  colnames(snps) <- paste("snp_", 1:p, sep = "")
+  rownames(snps) <- paste0("ind_", 1:n)
+  colnames(snps) <- paste0("snp_", 1:p)
 
   vec_maf <- apply(snps, 2, mean) / 2
   names(vec_maf) <- colnames(snps)
@@ -187,7 +188,8 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
 #'                                      input_family = "gaussian", bl_lgth = 100,
 #'                                      n_cpus = 2, user_seed = user_seed)
 #'
-#' @seealso \code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
+#' @seealso \code{\link{convert_snps}}, \code{\link{generate_snps}},
+#'   \code{\link{replicate_real_snps}}, \code{\link{convert_phenos}},
 #'   \code{\link{generate_phenos}}, \code{\link{generate_dependence}}
 #'
 #' @export
@@ -220,8 +222,8 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
     n_cpus_avail <- parallel::detectCores()
     if (n_cpus > n_cpus_avail) {
       n_cpus <- n_cpus_avail
-      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                    "available on the machine. The latter has been used instead.", sep=""))
+      warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead."))
     }
   }
 
@@ -234,8 +236,8 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
   if (!is.null(d)) {
     d_av <- ncol(real_phenos)
     if(d > d_av)
-      stop(paste("Provided n greater than number of phenotypes available: ",
-                 d, " > ", d_av, sep = ""))
+      stop(paste0("Provided n greater than number of phenotypes available: ",
+                 d, " > ", d_av))
     real_phenos <- real_phenos[, 1:d]
   } else {
     d <- ncol(real_phenos)
@@ -252,8 +254,8 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
 
     if (bl_lgth == 1) stop("Provided block length must be larger than 1")
     if (bl_lgth > d)
-      stop(paste("Provided block length must be smaller or equal to the number ",
-                 "of phenotypes available: ", bl_lgth, " > ", d, sep = ""))
+      stop(paste0("Provided block length must be smaller or equal to the number ",
+                 "of phenotypes available: ", bl_lgth, " > ", d))
   }
 
   n_real <- nrow(real_phenos)
@@ -277,8 +279,8 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
 
   phenos <- sweep(sweep(scale(phenos), 2, apply(real_phenos, 2, sd), `*`), 2, apply(real_phenos, 2, mean), `+`)
 
-  rownames(phenos) <- paste("ind_", 1:n, sep = "")
-  colnames(phenos) <- paste("pheno_", 1:d, sep = "")
+  rownames(phenos) <- paste0("ind_", 1:n)
+  colnames(phenos) <- paste0("pheno_", 1:d)
 
   ind_bl <- NULL # block chuncks do not necessarily represent blocks of correlated phenotypes.
 

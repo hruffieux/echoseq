@@ -55,6 +55,7 @@ list_snps <- generate_snps(n, p, cor_type, vec_rho, n_cpus = 2,
 
 }
 \seealso{
-\code{\link{replicate_real_snps}}, \code{\link{generate_phenos}},
+\code{\link{convert_snps}}, \code{\link{replicate_real_snps}},
+  \code{\link{convert_phenos}}, \code{\link{generate_phenos}},
   \code{\link{replicate_real_phenos}}, \code{\link{generate_dependence}}
 }

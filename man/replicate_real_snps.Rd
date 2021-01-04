@@ -58,6 +58,7 @@ list_snps <- replicate_real_snps(n, list_fake_real_snps$snps, bl_lgth = 100,
 
 }
 \seealso{
-\code{\link{generate_snps}}, \code{\link{generate_phenos}},
+\code{\link{convert_snps}}, \code{\link{generate_snps}},
+  \code{\link{convert_phenos}}, \code{\link{generate_phenos}},
   \code{\link{replicate_real_phenos}}, \code{\link{generate_dependence}}
 }
