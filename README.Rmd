@@ -1,0 +1,83 @@
+---
+output:
+  md_document:
+    variant: gfm
+html_preview: false
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r echo=FALSE, results="hide", message=FALSE}
+require("badger")
+
+# modified badger function to all the Travis pipeline to run on other branches than the master
+#
+my_currentGitHubRef <- function(ref) {
+	if (!is.null(ref)) {return(ref)}
+
+	url <- desc::desc_get_field("URL")
+	if (!grepl("gitHub", url, ignore.case = TRUE)) {
+		stop("reference could not be determined by the DESCRIPTION' url")
+	}
+
+	url <- unlist(strsplit(url, ",\\s*"))
+	url <- url[grepl("github", url, ignore.case = TRUE)][[1]]
+
+	ref <- gsub("https://github.com/", "", url)
+	ref
+}
+
+my_badge_travis <- function(ref = NULL, is_commercial = FALSE, branch = "master") 
+{
+    ref <- my_currentGitHubRef(ref)
+    ext <- ifelse(is_commercial, "com/", "org/")
+    svg <- paste0("https://travis-ci.", ext, ref, ".svg?branch=", branch)
+    url <- paste0("https://travis-ci.", ext, ref)
+    paste0("[![](", svg, ")](", url, ")")
+}
+```
+
+## echoseq: Faithful replication and simulation of molecular and clinical data
+
+`r badge_github_actions("hruffieux/echoseq")`
+`r my_badge_travis("hruffieux/echoseq", branch = "devel")`
+`r badge_devel("hruffieux/echoseq", "blue")`
+`r badge_code_size("hruffieux/echoseq")`
+
+
+## Overview
+
+**echoseq** is an R package providing functions to emulate molecular quantitative
+trait locus data, and clinical data associated with genetic variants under
+user-specified association patterns. The data can be obtained by pure simulation 
+or can replicate real datasets supplied by the user. Datasets simulated using 
+**echoseq** may replace real datasets when these cannot be shared for diverse 
+privacy reasons. The data generation schemes are based on generally accepted 
+principles of population genetics (Hardy–Weinberg equilibrium, 
+linkage-disequilibrium, natural selection, pleiotropic control, sparsity 
+assumptions, epigenetic control, etc).
+
+
+## Warning
+
+**This is a development branch**, it is not guaranteed to be stable at any given
+time and features are subject to change. Please use the [stable version](https://github.com/hruffieux/echoseq), unless you want to test and
+report issues.
+
+## Installation
+
+To install, run the following commands in R:
+
+``` r
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("hruffieux/echoseq", ref = "devel")
+```
+
+## License and authors
+
+This software uses the GPL v3 license, see [LICENSE](LICENSE).
+Authors and copyright are provided in [DESCRIPTION](DESCRIPTION).
+
+## Issues
+
+To report an issue, please use the [echoseq issue tracker](https://github.com/hruffieux/echoseq/issues) at github.com.
