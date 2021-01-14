@@ -6,9 +6,10 @@ html_preview: false
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- Add README.Rmd to .Rbuildignore -->
 
 ```{r echo=FALSE, results="hide", message=FALSE}
-require("badger")
+require(badger)
 
 # modified badger function to all the Travis pipeline to run on other branches than the master
 #
@@ -39,8 +40,11 @@ my_badge_travis <- function(ref = NULL, is_commercial = FALSE, branch = "master"
 
 ## echoseq: Faithful replication and simulation of molecular and clinical data
 
+<!-- Run usethis::use_github_actions() to set up the pipeline and then -->
 `r badge_github_actions("hruffieux/echoseq")`
 `r my_badge_travis("hruffieux/echoseq", branch = "devel")`
+`r badge_lifecycle("maturing", "blue")`
+`r badge_license("GPL v3")`
 `r badge_devel("hruffieux/echoseq", "blue")`
 `r badge_code_size("hruffieux/echoseq")`
 
