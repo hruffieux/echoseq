@@ -50,7 +50,7 @@ block correlation structure and minor allele frequencies.
 user_seed <- 123; set.seed(user_seed)
 n <- 500; p <- 10000
 cor_type <- "autocorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
-list_snps <- generate_snps(n, p, cor_type, vec_rho, n_cpus = 2,
+list_snps <- generate_snps(n, p, cor_type, vec_rho, n_cpus = 1,
                            user_seed = user_seed)
 
 }

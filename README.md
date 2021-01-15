@@ -3,14 +3,13 @@
 
 ## echoseq: Faithful replication and simulation of molecular and clinical data
 
-<!-- Run usethis::use_github_actions() to set up the pipeline and then -->
-
+[![](https://travis-ci.org/hruffieux/echoseq.svg?branch=devel)](https://travis-ci.org/hruffieux/echoseq)
 [![R build
 status](https://github.com/hruffieux/echoseq/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/echoseq/actions)
-[![](https://travis-ci.org/hruffieux/echoseq.svg?branch=devel)](https://travis-ci.org/hruffieux/echoseq)
-[![](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
+<!-- Run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 [![License: GPL
 v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://cran.r-project.org/web/licenses/GPL%20v3)
+[![](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![](https://img.shields.io/badge/devel%20version-0.3.1-blue.svg)](https://github.com/hruffieux/echoseq)
 [![](https://img.shields.io/github/languages/code-size/hruffieux/echoseq.svg)](https://github.com/hruffieux/echoseq)
 

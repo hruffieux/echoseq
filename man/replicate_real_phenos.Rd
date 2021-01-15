@@ -60,11 +60,11 @@ cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
 # Provided phenotypes assumed to be normally distributed
 var_err <- runif(d, min = 0.1, max = 0.4)
 list_fake_real_phenos <- generate_phenos(n, d, var_err, cor_type = cor_type,
-                                         vec_rho = vec_rho, n_cpus = 2,
+                                         vec_rho = vec_rho, n_cpus = 1,
                                          user_seed = user_seed)
 list_phenos <- replicate_real_phenos(n, list_fake_real_phenos$phenos,
                                      input_family = "gaussian", bl_lgth = 100,
-                                     n_cpus = 2, user_seed = user_seed)
+                                     n_cpus = 1, user_seed = user_seed)
 
 }
 \seealso{
