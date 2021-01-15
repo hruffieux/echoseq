@@ -56,7 +56,6 @@ my_badge_travis <- function(ref = NULL, is_commercial = FALSE, branch = "master"
 `r my_badge_travis("hruffieux/echoseq", branch = "devel")`
 `r badge_github_actions("hruffieux/echoseq")` 
 `r badge_license("GPL v3")`
-`r badge_lifecycle("maturing", "blue")`
 `r badge_devel("hruffieux/echoseq", "blue")`
 `r badge_code_size("hruffieux/echoseq")`
 
