@@ -3,10 +3,11 @@
 
 ## echoseq: Faithful replication and simulation of molecular and clinical data
 
+<!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
+
 [![](https://travis-ci.org/hruffieux/echoseq.svg?branch=devel)](https://travis-ci.org/hruffieux/echoseq)
 [![R build
 status](https://github.com/hruffieux/echoseq/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/echoseq/actions)
-<!-- Run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 [![License: GPL
 v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://cran.r-project.org/web/licenses/GPL%20v3)
 [![](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)

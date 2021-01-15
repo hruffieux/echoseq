@@ -40,8 +40,9 @@ my_badge_travis <- function(ref = NULL, is_commercial = FALSE, branch = "master"
 
 ## echoseq: Faithful replication and simulation of molecular and clinical data
 
+<!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 `r my_badge_travis("hruffieux/echoseq", branch = "devel")`
-`r badge_github_actions("hruffieux/echoseq")` <!-- Run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
+`r badge_github_actions("hruffieux/echoseq")` 
 `r badge_license("GPL v3")`
 `r badge_lifecycle("maturing", "blue")`
 `r badge_devel("hruffieux/echoseq", "blue")`
