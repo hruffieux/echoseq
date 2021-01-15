@@ -31,7 +31,7 @@
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 500; p <- 10000
 #' cor_type <- "autocorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
-#' list_snps <- generate_snps(n, p, cor_type, vec_rho, n_cpus = 2,
+#' list_snps <- generate_snps(n, p, cor_type, vec_rho, n_cpus = 1,
 #'                            user_seed = user_seed)
 #'
 #' @seealso \code{\link{convert_snps}}, \code{\link{replicate_real_snps}},
@@ -190,7 +190,7 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
 #' cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
 #'
 #' list_phenos <- generate_phenos(n, d, cor_type = cor_type, vec_rho = vec_rho,
-#'                                n_cpus = 2, user_seed = user_seed)
+#'                                n_cpus = 1, user_seed = user_seed)
 #'
 #' @seealso \code{\link{convert_snps}}, \code{\link{generate_snps}},
 #'   \code{\link{replicate_real_snps}}, \code{\link{convert_phenos}},

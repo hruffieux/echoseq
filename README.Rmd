@@ -1,0 +1,65 @@
+---
+output:
+  md_document:
+    variant: gfm
+html_preview: false
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- First time: run usethis::use_readme_rmd() to create a pre-commit hook that 
+prevents from committing if the README.Rmd has changed, but has not been 
+re-knitted to generate an updated README.md -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+
+```{r echo=FALSE, results="hide", message=FALSE}
+require(badger)
+```
+
+## echoseq: Faithful replication and simulation of molecular and clinical data
+
+<!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
+`r badge_travis("hruffieux/echoseq")`
+`r badge_github_actions("hruffieux/echoseq")` 
+`r badge_license("GPL v3")`
+`r badge_devel("hruffieux/echoseq", "blue")`
+`r badge_code_size("hruffieux/echoseq")`
+
+## Overview
+
+**echoseq** is an R package providing functions to emulate molecular quantitative
+trait locus data, and clinical data associated with genetic variants under
+user-specified association patterns. The data can be obtained by pure simulation 
+or can replicate real datasets supplied by the user. Datasets simulated using 
+**echoseq** may replace real datasets when these cannot be shared for diverse 
+privacy reasons. The data generation schemes are based on generally accepted 
+principles of population genetics (Hardy–Weinberg equilibrium, 
+linkage-disequilibrium, natural selection, pleiotropic control, sparsity 
+assumptions, epigenetic control, etc).
+
+
+## Installation
+
+To install, run the following commands in R:
+
+``` r
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("hruffieux/echoseq")
+```
+
+## License and authors
+
+This software uses the GPL v3 license, see [LICENSE](LICENSE).
+Authors and copyright are provided in [DESCRIPTION](DESCRIPTION).
+
+## Issues
+
+To report an issue, please use the [echoseq issue tracker](https://github.com/hruffieux/echoseq/issues) at github.com.

@@ -61,7 +61,7 @@ n <- 500; d <- 10000
 cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
 
 list_phenos <- generate_phenos(n, d, cor_type = cor_type, vec_rho = vec_rho,
-                               n_cpus = 2, user_seed = user_seed)
+                               n_cpus = 1, user_seed = user_seed)
 
 }
 \seealso{
