@@ -6,7 +6,19 @@ html_preview: false
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-<!-- Add README.Rmd to .Rbuildignore -->
+<!-- First time: run usethis::use_readme_rmd() to create a pre-commit hook that 
+prevents from committing if the README.Rmd has changed, but has not been 
+re-knitted to generate an updated README.md -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
 
 ```{r echo=FALSE, results="hide", message=FALSE}
 require(badger)

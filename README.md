@@ -1,5 +1,7 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-<!-- Add README.Rmd to .Rbuildignore -->
+<!-- First time: run usethis::use_readme_rmd() to create a pre-commit hook that 
+prevents from committing if the README.Rmd has changed, but has not been 
+re-knitted to generate an updated README.md -->
 
 ## echoseq: Faithful replication and simulation of molecular and clinical data
 
