@@ -10,7 +10,7 @@ base_logo <- "inst/sticker/echoseq_logo_base.png"
 
 dir.create("man/figures/", showWarnings = FALSE)
 
-col <- "grey30"#"black" #"#5A6B5E" #"#266040"#"grey30"
+col <- "grey40"
 
 sticker(base_logo,
         package="echoseq",
@@ -28,7 +28,7 @@ sticker(base_logo,
         spotlight = TRUE,
         l_x = 1.1,
         l_y = 1.3,
-        l_alpha = 0.6,
+        l_alpha = 0.3,
         filename="man/figures/echoseq_logo.png",
         asp = 1,
         dpi = 1200)
