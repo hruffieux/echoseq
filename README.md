@@ -3,7 +3,7 @@
 prevents from committing if the README.Rmd has changed, but has not been 
 re-knitted to generate an updated README.md -->
 
-## echoseq: Faithful replication and simulation of molecular and clinical data
+## echoseq: Faithful replication and simulation of molecular and clinical data <img src="man/figures/echoseq_logo.png" align="right" height="150"/>
 
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 
