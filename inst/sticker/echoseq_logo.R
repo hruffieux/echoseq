@@ -28,7 +28,7 @@ sticker(base_logo,
         spotlight = TRUE,
         l_x = 1.1,
         l_y = 1.3,
-        l_alpha = 0.3,
+        l_alpha = 0.4,
         filename="man/figures/echoseq_logo.png",
         asp = 1,
         dpi = 1200)
