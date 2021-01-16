@@ -52,7 +52,7 @@ To install, run the following commands in R:
 
 ``` r
 if(!require(remotes)) install.packages("remotes")
-remotes::install_github("hruffieux/echoseq", ref = "devel")
+remotes::install_github("hruffieux/echoseq")
 ```
 
 ## License and authors
