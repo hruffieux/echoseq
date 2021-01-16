@@ -11,7 +11,7 @@ re-knitted to generate an updated README.md -->
 [![R build
 status](https://github.com/hruffieux/echoseq/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/echoseq/actions)
 [![License: GPL
-v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://cran.r-project.org/web/licenses/GPL%20v3)
+v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![](https://img.shields.io/badge/devel%20version-0.3.1-blue.svg)](https://github.com/hruffieux/echoseq)
 [![](https://img.shields.io/github/languages/code-size/hruffieux/echoseq.svg)](https://github.com/hruffieux/echoseq)
 
@@ -33,8 +33,8 @@ control, etc).
 To install, run the following commands in R:
 
 ``` r
-if(!require(devtools)) install.packages("devtools")
-devtools::install_github("hruffieux/echoseq")
+if(!require(remotes)) install.packages("remotes")
+remotes::install_github("hruffieux/echoseq", ref = "devel")
 ```
 
 ## License and authors
