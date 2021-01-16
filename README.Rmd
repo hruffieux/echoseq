@@ -55,7 +55,7 @@ my_badge_travis <- function(ref = NULL, is_commercial = FALSE, branch = "master"
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 `r my_badge_travis("hruffieux/echoseq", branch = "devel")`
 `r badge_github_actions("hruffieux/echoseq")` 
-`r badge_license("GPL v3")`
+`r badge_license("GPL v3", url = "https://www.gnu.org/licenses/gpl-3.0")`
 `r badge_devel("hruffieux/echoseq", "blue")`
 `r badge_code_size("hruffieux/echoseq")`
 
@@ -84,8 +84,8 @@ report issues.
 To install, run the following commands in R:
 
 ``` r
-if(!require(devtools)) install.packages("devtools")
-devtools::install_github("hruffieux/echoseq", ref = "devel")
+if(!require(remotes)) install.packages("remotes")
+remotes::install_github("hruffieux/echoseq", ref = "devel")
 ```
 
 ## License and authors
