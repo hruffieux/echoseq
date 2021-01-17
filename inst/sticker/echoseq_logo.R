@@ -9,8 +9,6 @@ source(file.path(inst_dir, "utils_logo.R"))
 seed <- 123
 set.seed(seed)
 
-base_logo <-
-
 output_dir <- "man/figures/"
 dir.create(output_dir, showWarnings = FALSE)
 
