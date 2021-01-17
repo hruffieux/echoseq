@@ -15,7 +15,7 @@ output_dir <- "man/figures/"
 dir.create(output_dir, showWarnings = FALSE)
 
 output_file <- "echoseq_logo.png"
-col <- "grey40"
+col <- "grey30"
 
 my_sticker(file.path(inst_dir, "echoseq_logo_base.png"),
         package="echoseq",
@@ -27,16 +27,16 @@ my_sticker(file.path(inst_dir, "echoseq_logo_base.png"),
         s_height=1.5,
         p_x = 1.3,
         p_y = 0.7,
-        h_size = 1.3,
+        h_size = 0.5,
         h_fill= grDevices::adjustcolor(col, alpha.f = 0.15),
-        h_color= grDevices::adjustcolor(col, alpha.f = 0.15),#col,
+        h_color= col,
         spotlight = TRUE,
         l_x = 1.1,
         l_y = 1.3,
         l_alpha = 0.4,
-        white_around_sticker = TRUE,
+        white_around_sticker = FALSE,
         filename=file.path(output_dir, output_file),
-        asp = 1,
+        asp = 0.9,
         dpi = 1200)
 
 # transparent edges
