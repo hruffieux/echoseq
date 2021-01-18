@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 *.pdf
+*.key
 .DS_Store
 
 # temporary files emacs 
