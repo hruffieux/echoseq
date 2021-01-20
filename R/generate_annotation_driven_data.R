@@ -21,7 +21,7 @@
 #' module. If \code{NULL}, independent SNPs simulated.
 #' @param r Total number of epigenetic annotations.
 #' @param r0 Number of epigenetic annotations which trigger genetic associations.
-#' @param prop_act Proportion of active ......
+#' @param prop_act Approximate proportion of associated SNP-phenotype pairs.
 #' @param max_tot_pve Maximum variance explained by the SNPs for a given
 #' phenotype.
 #' @param annots_vs_indep Proportion of active SNPs whose effects are triggered
@@ -65,13 +65,19 @@
 #' @param module_specific Boolean specifying whether the epigenome activation is
 #' module-specific or not. Default is \code{FALSE}
 #' @param user_seed Seed set for reproducibility. Default is \code{NULL}, no
-#'   seed set.
+#' seed set.
+#' @param return_patterns Boolean specifying whether the simulated SNP-phenotype
+#' association pattern and active annotation variables.
 #'
 #' @return A list containing matrices of
 #'  \item{snps}{Matrix containing the simulated or supplied SNP data.}
 #'  \item{annots}{Matrix containing the simulated or supplied epiegenetic
 #'  annotation data.}
 #'  \item{phenos}{Matrix containing the simulated phenotypic data.}
+#'  \item{pat}{If \code{return_patterns} is \code{TRUE}, simulated SNP-phenotype
+#'   association pattern.}
+#'  \item{pat}{If \code{return_patterns} is \code{TRUE}, active annotation
+#'  variables.}
 #'
 #' @examples
 #' user_seed <- 123; set.seed(user_seed)
@@ -146,7 +152,8 @@ generate_dependence_from_annots <- function(n,
                                             n_cpus = 1,
                                             maxit = 1e4,
                                             module_specific = FALSE,
-                                            user_seed = NULL) {
+                                            user_seed = NULL,
+                                            return_patterns = FALSE) {
 
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
@@ -370,7 +377,13 @@ generate_dependence_from_annots <- function(n,
 
   phenos <- list_Y$Y
 
-  create_named_list_(snps, annots, phenos)
+  if (return_patterns) {
+    pat <- list_Y$pat
+    active_annots <- list_map$list_map_annots$tb_act_annots
+  } else {
+    pat <- active_annots <- NULL
+  }
+  create_named_list_(snps, annots, phenos, pat, active_annots)
 }
 
 set_locus_and_module_pattern_from_annots_ <- function(n, # sample size
