@@ -21,7 +21,7 @@
 #' module. If \code{NULL}, independent SNPs simulated.
 #' @param r Total number of epigenetic annotations.
 #' @param r0 Number of epigenetic annotations which trigger genetic associations.
-#' @param prop_act Proportion of active ......
+#' @param prop_act Approximate proportion of associated SNP-phenotype pairs.
 #' @param max_tot_pve Maximum variance explained by the SNPs for a given
 #' phenotype.
 #' @param annots_vs_indep Proportion of active SNPs whose effects are triggered
@@ -55,6 +55,8 @@
 #' the number of active annots per module. Default is 1.
 #' @param sd_act_prob Standard deviation for the effects of SNPs and annotations.
 #'  Default is 1.
+#' @param sd_pat Standard deviation for the randomness of the SNP-trait
+#'  pattern. Default is 1.
 #' @param sd_err Response error standard deviation. Default is 1.
 #' @param rbeta_sh1_rr  Beta distribution shape2 parameter for the proportion of
 #' responses associated with an active SNP (in a given module) rbeta_sh2_rr = 1
@@ -65,13 +67,19 @@
 #' @param module_specific Boolean specifying whether the epigenome activation is
 #' module-specific or not. Default is \code{FALSE}
 #' @param user_seed Seed set for reproducibility. Default is \code{NULL}, no
-#'   seed set.
+#' seed set.
+#' @param return_patterns Boolean specifying whether the simulated SNP-phenotype
+#' association pattern and active annotation variables.
 #'
 #' @return A list containing matrices of
 #'  \item{snps}{Matrix containing the simulated or supplied SNP data.}
 #'  \item{annots}{Matrix containing the simulated or supplied epiegenetic
 #'  annotation data.}
 #'  \item{phenos}{Matrix containing the simulated phenotypic data.}
+#'  \item{pat}{If \code{return_patterns} is \code{TRUE}, simulated SNP-phenotype
+#'   association pattern.}
+#'  \item{pat}{If \code{return_patterns} is \code{TRUE}, active annotation
+#'  variables.}
 #'
 #' @examples
 #' user_seed <- 123; set.seed(user_seed)
@@ -141,12 +149,14 @@ generate_dependence_from_annots <- function(n,
                                             candidate_modules_annots = NULL,
                                             tpois_lam_act_annots_mm = 1,
                                             sd_act_prob = 1,
+                                            sd_pat = 1,
                                             sd_err = 1,
                                             rbeta_sh1_rr = 1,
                                             n_cpus = 1,
                                             maxit = 1e4,
                                             module_specific = FALSE,
-                                            user_seed = NULL) {
+                                            user_seed = NULL,
+                                            return_patterns = FALSE) {
 
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
@@ -361,6 +371,7 @@ generate_dependence_from_annots <- function(n,
   list_Y <- generate_phenos_from_annots_(list_map,
                                         prop_act,
                                         sd_act_prob,
+                                        sd_pat,
                                         sd_act_beta,
                                         sd_err,
                                         max_tot_pve,
@@ -370,7 +381,13 @@ generate_dependence_from_annots <- function(n,
 
   phenos <- list_Y$Y
 
-  create_named_list_(snps, annots, phenos)
+  if (return_patterns) {
+    pat <- list_Y$pat
+    active_annots <- list_map$list_map_annots$tb_act_annots
+  } else {
+    pat <- active_annots <- NULL
+  }
+  create_named_list_(snps, annots, phenos, pat, active_annots)
 }
 
 set_locus_and_module_pattern_from_annots_ <- function(n, # sample size
@@ -1146,6 +1163,7 @@ choose_act_snps_ <- function(type,                     # flag "annots" or "indep
 generate_phenos_from_annots_ <- function(list_map,           # object supplied by the set_locus_and_module_pattern_from_annots_ function
                                         prop_act,           # approximate proportion of non-zero predictor-response effects
                                         sd_act_prob,        # standard deviation for the effects of hotspot propensities and annots (within probit link - Gaussian effects)
+                                        sd_pat,             # standard deviation for the randomness of the predictor-response pattern
                                         sd_act_beta,        # standard deviation for the regression effects of between predictors and responses (Gaussian effects)
                                         sd_err,             # response error standard deviation
                                         max_tot_pve = NULL, # maximum proportion of response variance explained by the SNPs, for each response
@@ -1280,7 +1298,7 @@ generate_phenos_from_annots_ <- function(list_map,           # object supplied b
 
   }
 
-  W <- apply(W_arg, 2, function(W_arg_col) rnorm(p, mean = W_arg_col, sd = 1))
+  W <- apply(W_arg, 2, function(W_arg_col) rnorm(p, mean = W_arg_col, sd = sd_pat))
 
   # prop_act is the desired proportion of associations
   #

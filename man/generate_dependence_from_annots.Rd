@@ -33,12 +33,14 @@ generate_dependence_from_annots(
   candidate_modules_annots = NULL,
   tpois_lam_act_annots_mm = 1,
   sd_act_prob = 1,
+  sd_pat = 1,
   sd_err = 1,
   rbeta_sh1_rr = 1,
   n_cpus = 1,
   maxit = 10000,
   module_specific = FALSE,
-  user_seed = NULL
+  user_seed = NULL,
+  return_patterns = FALSE
 )
 }
 \arguments{
@@ -71,7 +73,7 @@ module. If \code{NULL}, independent SNPs simulated.}
 
 \item{r0}{Number of epigenetic annotations which trigger genetic associations.}
 
-\item{prop_act}{Proportion of active ......}
+\item{prop_act}{Approximate proportion of associated SNP-phenotype pairs.}
 
 \item{max_tot_pve}{Maximum variance explained by the SNPs for a given
 phenotype.}
@@ -120,6 +122,9 @@ the number of active annots per module. Default is 1.}
 \item{sd_act_prob}{Standard deviation for the effects of SNPs and annotations.
 Default is 1.}
 
+\item{sd_pat}{Standard deviation for the randomness of the SNP-trait
+pattern. Default is 1.}
+
 \item{sd_err}{Response error standard deviation. Default is 1.}
 
 \item{rbeta_sh1_rr}{Beta distribution shape2 parameter for the proportion of
@@ -136,6 +141,9 @@ module-specific or not. Default is \code{FALSE}}
 
 \item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
 seed set.}
+
+\item{return_patterns}{Boolean specifying whether the simulated SNP-phenotype
+association pattern and active annotation variables.}
 }
 \value{
 A list containing matrices of
@@ -143,6 +151,10 @@ A list containing matrices of
  \item{annots}{Matrix containing the simulated or supplied epiegenetic
  annotation data.}
  \item{phenos}{Matrix containing the simulated phenotypic data.}
+ \item{pat}{If \code{return_patterns} is \code{TRUE}, simulated SNP-phenotype
+  association pattern.}
+ \item{pat}{If \code{return_patterns} is \code{TRUE}, active annotation
+ variables.}
 }
 \description{
 Generate epigenetic marks, SNPs and phenotypes with epigenome-driven genetic
