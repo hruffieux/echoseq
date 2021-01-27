@@ -55,6 +55,8 @@
 #' the number of active annots per module. Default is 1.
 #' @param sd_act_prob Standard deviation for the effects of SNPs and annotations.
 #'  Default is 1.
+#' @param sd_pat Standard deviation for the randomness of the SNP-trait
+#'  pattern. Default is 1.
 #' @param sd_err Response error standard deviation. Default is 1.
 #' @param rbeta_sh1_rr  Beta distribution shape2 parameter for the proportion of
 #' responses associated with an active SNP (in a given module) rbeta_sh2_rr = 1
@@ -147,6 +149,7 @@ generate_dependence_from_annots <- function(n,
                                             candidate_modules_annots = NULL,
                                             tpois_lam_act_annots_mm = 1,
                                             sd_act_prob = 1,
+                                            sd_pat = 1,
                                             sd_err = 1,
                                             rbeta_sh1_rr = 1,
                                             n_cpus = 1,
@@ -368,6 +371,7 @@ generate_dependence_from_annots <- function(n,
   list_Y <- generate_phenos_from_annots_(list_map,
                                         prop_act,
                                         sd_act_prob,
+                                        sd_pat,
                                         sd_act_beta,
                                         sd_err,
                                         max_tot_pve,
@@ -1159,6 +1163,7 @@ choose_act_snps_ <- function(type,                     # flag "annots" or "indep
 generate_phenos_from_annots_ <- function(list_map,           # object supplied by the set_locus_and_module_pattern_from_annots_ function
                                         prop_act,           # approximate proportion of non-zero predictor-response effects
                                         sd_act_prob,        # standard deviation for the effects of hotspot propensities and annots (within probit link - Gaussian effects)
+                                        sd_pat,             # standard deviation for the randomness of the predictor-response pattern
                                         sd_act_beta,        # standard deviation for the regression effects of between predictors and responses (Gaussian effects)
                                         sd_err,             # response error standard deviation
                                         max_tot_pve = NULL, # maximum proportion of response variance explained by the SNPs, for each response
@@ -1293,7 +1298,7 @@ generate_phenos_from_annots_ <- function(list_map,           # object supplied b
 
   }
 
-  W <- apply(W_arg, 2, function(W_arg_col) rnorm(p, mean = W_arg_col, sd = 1))
+  W <- apply(W_arg, 2, function(W_arg_col) rnorm(p, mean = W_arg_col, sd = sd_pat))
 
   # prop_act is the desired proportion of associations
   #

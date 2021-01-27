@@ -33,6 +33,7 @@ generate_dependence_from_annots(
   candidate_modules_annots = NULL,
   tpois_lam_act_annots_mm = 1,
   sd_act_prob = 1,
+  sd_pat = 1,
   sd_err = 1,
   rbeta_sh1_rr = 1,
   n_cpus = 1,
@@ -120,6 +121,9 @@ the number of active annots per module. Default is 1.}
 
 \item{sd_act_prob}{Standard deviation for the effects of SNPs and annotations.
 Default is 1.}
+
+\item{sd_pat}{Standard deviation for the randomness of the SNP-trait
+pattern. Default is 1.}
 
 \item{sd_err}{Response error standard deviation. Default is 1.}
 
