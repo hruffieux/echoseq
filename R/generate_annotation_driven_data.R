@@ -78,7 +78,9 @@
 #'  \item{phenos}{Matrix containing the simulated phenotypic data.}
 #'  \item{pat}{If \code{return_patterns} is \code{TRUE}, simulated SNP-phenotype
 #'   association pattern.}
-#'  \item{pat}{If \code{return_patterns} is \code{TRUE}, active annotation
+#'  \item{beta}{If \code{return_patterns} is \code{TRUE}, simulated SNP-phenotype
+#'   regression coefficients.}
+#'  \item{active_annots}{If \code{return_patterns} is \code{TRUE}, active annotation
 #'  variables.}
 #'
 #' @examples
@@ -383,11 +385,12 @@ generate_dependence_from_annots <- function(n,
 
   if (return_patterns) {
     pat <- list_Y$pat
+    beta <- list_Y$beta
     active_annots <- list_map$list_map_annots$tb_act_annots
   } else {
-    pat <- active_annots <- NULL
+    pat <- beta <- active_annots <- NULL
   }
-  create_named_list_(snps, annots, phenos, pat, active_annots)
+  create_named_list_(snps, annots, phenos, pat, beta, active_annots)
 }
 
 set_locus_and_module_pattern_from_annots_ <- function(n, # sample size
