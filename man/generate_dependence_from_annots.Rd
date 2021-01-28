@@ -153,7 +153,9 @@ A list containing matrices of
  \item{phenos}{Matrix containing the simulated phenotypic data.}
  \item{pat}{If \code{return_patterns} is \code{TRUE}, simulated SNP-phenotype
   association pattern.}
- \item{pat}{If \code{return_patterns} is \code{TRUE}, active annotation
+ \item{beta}{If \code{return_patterns} is \code{TRUE}, simulated SNP-phenotype
+  regression coefficients.}
+ \item{active_annots}{If \code{return_patterns} is \code{TRUE}, active annotation
  variables.}
 }
 \description{
